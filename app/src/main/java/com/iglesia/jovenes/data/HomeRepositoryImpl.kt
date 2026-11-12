@@ -11,4 +11,12 @@ class HomeRepositoryImpl(
         homeDao.home(userId, System.currentTimeMillis())
             ?: error("No se encontraron datos para el usuario activo")
     }
+
+    override suspend fun enrollInActivity(userId: Int, activityId: Int): Result<Unit> = runCatching {
+        homeDao.enrollUserInActivity(userId, activityId)
+    }
+
+    override suspend fun cancelEnrollment(userId: Int, activityId: Int): Result<Unit> = runCatching {
+        homeDao.cancelUserEnrollment(userId, activityId)
+    }
 }

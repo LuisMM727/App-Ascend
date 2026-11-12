@@ -50,6 +50,18 @@ data class AdminActivityItem(
     val isActive: Boolean get() = status == "ACTIVA"
 }
 
+data class EnrolledUserItem(
+    val userId: Int,
+    val name: String,
+    val lastName: String,
+    val email: String,
+    val attendanceStatus: String,
+    val earnedPoints: Int,
+) {
+    val fullName: String get() = "$name $lastName".trim()
+    val isCompleted: Boolean get() = attendanceStatus == "COMPLETADA"
+}
+
 data class AdminLevelItem(
     val id: Int,
     val name: String,

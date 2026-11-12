@@ -10,6 +10,8 @@ interface AdminRepository {
     suspend fun getActivities(): Result<List<AdminActivityItem>>
     suspend fun createActivity(creatorUserId: Int, params: CreateActivityParams): Result<Unit>
     suspend fun toggleActivityStatus(activityId: Int, currentStatus: String): Result<Unit>
+    suspend fun getEnrolledUsersForActivity(activityId: Int): Result<List<EnrolledUserItem>>
+    suspend fun markAttendance(userId: Int, activityId: Int, points: Int): Result<Unit>
     suspend fun getLevels(): Result<List<AdminLevelItem>>
     suspend fun updateLevelPoints(levelId: Int, points: Int): Result<Unit>
 }

@@ -48,6 +48,7 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -89,7 +90,14 @@ fun HomeRoute(
     onDestinationSelected: (HomeDestination) -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    HomeScreen(state, viewModel::refresh, onLogout, onDestinationSelected)
+    HomeScreen(
+        state = state,
+        onRetry = viewModel::refresh,
+        onLogout = onLogout,
+        onEnroll = viewModel::enrollInActivity,
+        onCancelEnrollment = viewModel::cancelEnrollment,
+        onDestinationSelected = onDestinationSelected,
+    )
 }
 
 @Composable
@@ -97,6 +105,8 @@ fun HomeScreen(
     state: HomeUiState,
     onRetry: () -> Unit,
     onLogout: () -> Unit,
+    onEnroll: (Int) -> Unit,
+    onCancelEnrollment: (Int) -> Unit,
     onDestinationSelected: (HomeDestination) -> Unit,
 ) {
     Scaffold(
@@ -120,7 +130,13 @@ fun HomeScreen(
                 }
             }
 
-            is HomeUiState.Success -> HomeContent(state.data, onLogout, Modifier.padding(padding))
+            is HomeUiState.Success -> HomeContent(
+                data = state.data,
+                onLogout = onLogout,
+                onEnroll = onEnroll,
+                onCancelEnrollment = onCancelEnrollment,
+                modifier = Modifier.padding(padding),
+            )
         }
     }
 }
@@ -129,6 +145,8 @@ fun HomeScreen(
 private fun HomeContent(
     data: HomeData,
     onLogout: () -> Unit,
+    onEnroll: (Int) -> Unit,
+    onCancelEnrollment: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -149,7 +167,13 @@ private fun HomeContent(
         }
 
         item { SectionTitle("Próximas actividades", "Conecta, participa y gana XP") }
-        items(data.activities, key = { it.activityId }) { ActivityCard(it) }
+        items(data.activities, key = { it.activityId }) { activity ->
+            ActivityCard(
+                activity = activity,
+                onEnroll = { onEnroll(activity.activityId) },
+                onCancelEnrollment = { onCancelEnrollment(activity.activityId) },
+            )
+        }
 
         item { SectionTitle("Clasificación", "Líderes de esta semana") }
         item { LeaderboardCard(data.leaderboard) }
@@ -384,42 +408,102 @@ private fun MissionCard(mission: FeaturedMission) {
 }
 
 @Composable
-private fun ActivityCard(activity: HomeActivity) {
+private fun ActivityCard(
+    activity: HomeActivity,
+    onEnroll: () -> Unit,
+    onCancelEnrollment: () -> Unit,
+) {
+    val isEnrolled = activity.enrollmentStatus != null
+    val isFull = activity.currentCapacity >= activity.maximumCapacity
+
     Card(
-        onClick = {},
         colors = CardDefaults.cardColors(containerColor = CardSurface),
         border = BorderStroke(1.dp, Color.White.copy(alpha = .06f)),
         shape = RoundedCornerShape(20.dp),
     ) {
-        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                Modifier.size(46.dp).background(
-                    ElectricPurple.copy(alpha = .15f),
-                    RoundedCornerShape(14.dp),
-                ),
-                contentAlignment = Alignment.Center,
+        Column(Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    Modifier.size(46.dp).background(
+                        ElectricPurple.copy(alpha = .15f),
+                        RoundedCornerShape(14.dp),
+                    ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(Icons.Outlined.Place, null, tint = Color(0xFFB39CFF))
+                }
+                Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
+                    Text(
+                        activity.title,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        "${activity.location} · ${formatDate(activity.date)}",
+                        color = MutedText,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    Text(
+                        "${activity.currentCapacity}/${activity.maximumCapacity} inscritos",
+                        color = if (isFull && !isEnrolled) Color(0xFFFF7A85) else RewardGold,
+                        style = MaterialTheme.typography.labelSmall,
+                    )
+                }
+                Text("+${activity.totalPoints} XP", color = NeonCyan, fontWeight = FontWeight.Bold)
+            }
+
+            Spacer(Modifier.height(10.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(Icons.Outlined.Place, null, tint = Color(0xFFB39CFF))
+                if (isEnrolled) {
+                    Box(
+                        modifier = Modifier
+                            .background(Color(0xFF1E3B2A), RoundedCornerShape(10.dp))
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                    ) {
+                        Text(
+                            text = if (activity.enrollmentStatus == "COMPLETADA") "Asistió ✓ (+${activity.totalPoints} XP)" else "Inscrito ✓",
+                            color = Color(0xFF6BFFB8),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+
+                    Spacer(Modifier.weight(1f))
+
+                    if (activity.enrollmentStatus != "COMPLETADA") {
+                        TextButton(onClick = onCancelEnrollment) {
+                            Text("Cancelar", color = Color(0xFFFF7A85), fontSize = 12.sp)
+                        }
+                    }
+                } else if (isFull) {
+                    Box(
+                        modifier = Modifier
+                            .background(Color(0xFF3D1C22), RoundedCornerShape(10.dp))
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                    ) {
+                        Text("Cupos agotados", color = Color(0xFFFF7A85), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+                } else {
+                    Spacer(Modifier.weight(1f))
+                    Button(
+                        onClick = onEnroll,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = ElectricPurple,
+                            contentColor = Color.White,
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+                    ) {
+                        Text("Inscribirme", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    }
+                }
             }
-            Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
-                Text(
-                    activity.title,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    "${activity.location} · ${formatDate(activity.date)}",
-                    color = MutedText,
-                    style = MaterialTheme.typography.bodySmall,
-                )
-                Text(
-                    "${activity.currentCapacity}/${activity.maximumCapacity} inscritos",
-                    color = RewardGold,
-                    style = MaterialTheme.typography.labelSmall,
-                )
-            }
-            Text("+${activity.totalPoints} XP", color = NeonCyan, fontWeight = FontWeight.Bold)
         }
     }
 }

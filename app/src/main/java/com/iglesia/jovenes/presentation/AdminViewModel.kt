@@ -11,6 +11,7 @@ import com.iglesia.jovenes.domain.AdminStats
 import com.iglesia.jovenes.domain.AdminUserItem
 import com.iglesia.jovenes.domain.CreateActivityParams
 import com.iglesia.jovenes.domain.CreateMissionParams
+import com.iglesia.jovenes.domain.EnrolledUserItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -56,6 +57,15 @@ class AdminViewModel(
     private val _showCreateActivityDialog = MutableStateFlow(false)
     val showCreateActivityDialog: StateFlow<Boolean> = _showCreateActivityDialog.asStateFlow()
 
+    private val _selectedActivity = MutableStateFlow<AdminActivityItem?>(null)
+    val selectedActivity: StateFlow<AdminActivityItem?> = _selectedActivity.asStateFlow()
+
+    private val _enrolledUsers = MutableStateFlow<List<EnrolledUserItem>>(emptyList())
+    val enrolledUsers: StateFlow<List<EnrolledUserItem>> = _enrolledUsers.asStateFlow()
+
+    private val _showEnrolledUsersDialog = MutableStateFlow(false)
+    val showEnrolledUsersDialog: StateFlow<Boolean> = _showEnrolledUsersDialog.asStateFlow()
+
     init {
         loadData()
     }
@@ -74,6 +84,39 @@ class AdminViewModel(
 
     fun setShowCreateActivityDialog(show: Boolean) {
         _showCreateActivityDialog.value = show
+    }
+
+    fun setShowEnrolledUsersDialog(show: Boolean) {
+        _showEnrolledUsersDialog.value = show
+        if (!show) {
+            _selectedActivity.value = null
+            _enrolledUsers.value = emptyList()
+        }
+    }
+
+    fun openEnrolledUsersDialog(activity: AdminActivityItem) {
+        _selectedActivity.value = activity
+        _showEnrolledUsersDialog.value = true
+        loadEnrolledUsers(activity.id)
+    }
+
+    private fun loadEnrolledUsers(activityId: Int) {
+        viewModelScope.launch {
+            adminRepository.getEnrolledUsersForActivity(activityId)
+                .onSuccess { _enrolledUsers.value = it }
+                .onFailure { _errorMessage.value = it.message }
+        }
+    }
+
+    fun markAttendance(userId: Int, activityId: Int, points: Int) {
+        viewModelScope.launch {
+            adminRepository.markAttendance(userId, activityId, points)
+                .onSuccess {
+                    loadEnrolledUsers(activityId)
+                    loadData()
+                }
+                .onFailure { _errorMessage.value = it.message }
+        }
     }
 
     fun loadData() {

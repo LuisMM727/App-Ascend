@@ -11,6 +11,7 @@ import com.iglesia.jovenes.domain.AdminStats
 import com.iglesia.jovenes.domain.AdminUserItem
 import com.iglesia.jovenes.domain.CreateActivityParams
 import com.iglesia.jovenes.domain.CreateMissionParams
+import com.iglesia.jovenes.domain.EnrolledUserItem
 
 class AdminRepositoryImpl(
     private val adminDao: AdminDao,
@@ -129,6 +130,23 @@ class AdminRepositoryImpl(
     override suspend fun toggleActivityStatus(activityId: Int, currentStatus: String): Result<Unit> = runCatching {
         val newStatus = if (currentStatus == "ACTIVA") "INACTIVA" else "ACTIVA"
         adminDao.updateActivityStatus(activityId, newStatus)
+    }
+
+    override suspend fun getEnrolledUsersForActivity(activityId: Int): Result<List<EnrolledUserItem>> = runCatching {
+        adminDao.getEnrolledUsersForActivity(activityId).map { raw ->
+            EnrolledUserItem(
+                userId = raw.userId,
+                name = raw.name,
+                lastName = raw.lastName,
+                email = raw.email,
+                attendanceStatus = raw.attendanceStatus,
+                earnedPoints = raw.earnedPoints,
+            )
+        }
+    }
+
+    override suspend fun markAttendance(userId: Int, activityId: Int, points: Int): Result<Unit> = runCatching {
+        adminDao.markAttendanceAndGrantPoints(userId, activityId, points)
     }
 
     override suspend fun getLevels(): Result<List<AdminLevelItem>> = runCatching {

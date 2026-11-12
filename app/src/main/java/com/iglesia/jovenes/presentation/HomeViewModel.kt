@@ -39,6 +39,22 @@ class HomeViewModel(
                 }
         }
     }
+
+    fun enrollInActivity(activityId: Int) {
+        viewModelScope.launch {
+            repository.enrollInActivity(userId, activityId)
+                .onSuccess { refresh() }
+                .onFailure { refresh() }
+        }
+    }
+
+    fun cancelEnrollment(activityId: Int) {
+        viewModelScope.launch {
+            repository.cancelEnrollment(userId, activityId)
+                .onSuccess { refresh() }
+                .onFailure { refresh() }
+        }
+    }
 }
 
 class HomeViewModelFactory(

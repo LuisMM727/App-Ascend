@@ -1,6 +1,8 @@
 package com.iglesia.jovenes.data.local
 
 import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import com.iglesia.jovenes.domain.FeaturedMission
@@ -82,6 +84,38 @@ abstract class HomeDao {
         """
     )
     abstract suspend fun leaderboard(): List<LeaderboardEntry>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    abstract suspend fun insertEnrollment(enrollment: EnrollmentEntity)
+
+    @Query("DELETE FROM INSCRIPCIONES WHERE FK_Usuarios = :userId AND FK_Actividades = :activityId")
+    abstract suspend fun deleteEnrollment(userId: Int, activityId: Int)
+
+    @Query("UPDATE ACTIVIDADES SET Cupo_actual = Cupo_actual + 1 WHERE ID_Actividades = :activityId AND Cupo_actual < Cupo_maximo")
+    abstract suspend fun incrementActivityCapacity(activityId: Int)
+
+    @Query("UPDATE ACTIVIDADES SET Cupo_actual = MAX(0, Cupo_actual - 1) WHERE ID_Actividades = :activityId")
+    abstract suspend fun decrementActivityCapacity(activityId: Int)
+
+    @Transaction
+    open suspend fun enrollUserInActivity(userId: Int, activityId: Int) {
+        val enrollment = EnrollmentEntity(
+            id = 0,
+            userId = userId,
+            activityId = activityId,
+            enrolledAt = System.currentTimeMillis(),
+            attendanceStatus = "INSCRITO",
+            earnedPoints = 0,
+        )
+        insertEnrollment(enrollment)
+        incrementActivityCapacity(activityId)
+    }
+
+    @Transaction
+    open suspend fun cancelUserEnrollment(userId: Int, activityId: Int) {
+        deleteEnrollment(userId, activityId)
+        decrementActivityCapacity(activityId)
+    }
 
     @Transaction
     open suspend fun home(userId: Int, now: Long): HomeData? {

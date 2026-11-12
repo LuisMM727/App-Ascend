@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 
 data class AdminUserRaw(
     val userId: Int,
@@ -18,8 +19,17 @@ data class AdminUserRaw(
     val points: Int,
 )
 
+data class EnrolledUserRaw(
+    val userId: Int,
+    val name: String,
+    val lastName: String,
+    val email: String,
+    val attendanceStatus: String,
+    val earnedPoints: Int,
+)
+
 @Dao
-interface AdminDao {
+abstract class AdminDao {
     @Query(
         """
         SELECT u.ID_Usuarios AS userId,
@@ -38,41 +48,69 @@ interface AdminDao {
         ORDER BY u.ID_Usuarios DESC
         """
     )
-    suspend fun getAllUsersWithPoints(): List<AdminUserRaw>
+    abstract suspend fun getAllUsersWithPoints(): List<AdminUserRaw>
 
     @Query("UPDATE USUARIOS SET Estado = :status WHERE ID_Usuarios = :userId")
-    suspend fun updateUserStatus(userId: Int, status: String)
+    abstract suspend fun updateUserStatus(userId: Int, status: String)
 
     @Query("SELECT * FROM MISIONES ORDER BY ID_Misiones DESC")
-    suspend fun getAllMissions(): List<MissionEntity>
+    abstract suspend fun getAllMissions(): List<MissionEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertMission(mission: MissionEntity): Long
+    abstract suspend fun insertMission(mission: MissionEntity): Long
 
     @Query("UPDATE MISIONES SET Estado = :status WHERE ID_Misiones = :missionId")
-    suspend fun updateMissionStatus(missionId: Int, status: String)
+    abstract suspend fun updateMissionStatus(missionId: Int, status: String)
 
     @Query("SELECT * FROM ACTIVIDADES ORDER BY Fecha DESC")
-    suspend fun getAllActivities(): List<ActivityEntity>
+    abstract suspend fun getAllActivities(): List<ActivityEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertActivity(activity: ActivityEntity): Long
+    abstract suspend fun insertActivity(activity: ActivityEntity): Long
 
     @Query("UPDATE ACTIVIDADES SET Estado = :status WHERE ID_Actividades = :activityId")
-    suspend fun updateActivityStatus(activityId: Int, status: String)
+    abstract suspend fun updateActivityStatus(activityId: Int, status: String)
+
+    @Query(
+        """
+        SELECT u.ID_Usuarios AS userId,
+               u.Nombre AS name,
+               u.Apellido AS lastName,
+               u.Correo AS email,
+               i.Estado_asistencia AS attendanceStatus,
+               i.Puntos_ganados AS earnedPoints
+        FROM INSCRIPCIONES i
+        JOIN USUARIOS u ON u.ID_Usuarios = i.FK_Usuarios
+        WHERE i.FK_Actividades = :activityId
+        ORDER BY u.Nombre ASC
+        """
+    )
+    abstract suspend fun getEnrolledUsersForActivity(activityId: Int): List<EnrolledUserRaw>
+
+    @Query("UPDATE INSCRIPCIONES SET Estado_asistencia = 'COMPLETADA', Puntos_ganados = :points WHERE FK_Usuarios = :userId AND FK_Actividades = :activityId")
+    abstract suspend fun updateEnrollmentAttendance(userId: Int, activityId: Int, points: Int)
+
+    @Query("UPDATE USUARIO_PUNTOS SET Puntos_acumulados = Puntos_acumulados + :points, Ultima_actualizacion = :now WHERE FK_Usuarios = :userId")
+    abstract suspend fun addPointsToUser(userId: Int, points: Int, now: Long)
+
+    @Transaction
+    open suspend fun markAttendanceAndGrantPoints(userId: Int, activityId: Int, points: Int) {
+        updateEnrollmentAttendance(userId, activityId, points)
+        addPointsToUser(userId, points, System.currentTimeMillis())
+    }
 
     @Query("SELECT * FROM NIVELES ORDER BY Orden ASC")
-    suspend fun getAllLevels(): List<LevelEntity>
+    abstract suspend fun getAllLevels(): List<LevelEntity>
 
     @Query("UPDATE NIVELES SET Puntos_requeridos = :points WHERE ID_Niveles = :levelId")
-    suspend fun updateLevelPoints(levelId: Int, points: Int)
+    abstract suspend fun updateLevelPoints(levelId: Int, points: Int)
 
     @Query("SELECT COUNT(*) FROM USUARIOS WHERE FK_Rol = 2")
-    suspend fun getUserCount(): Int
+    abstract suspend fun getUserCount(): Int
 
     @Query("SELECT COUNT(*) FROM MISIONES WHERE Estado = 'ACTIVA'")
-    suspend fun getActiveMissionsCount(): Int
+    abstract suspend fun getActiveMissionsCount(): Int
 
     @Query("SELECT COUNT(*) FROM ACTIVIDADES WHERE Estado = 'ACTIVA'")
-    suspend fun getUpcomingActivitiesCount(): Int
+    abstract suspend fun getUpcomingActivitiesCount(): Int
 }

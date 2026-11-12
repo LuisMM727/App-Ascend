@@ -25,6 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ExitToApp
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.AdminPanelSettings
+import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Church
 import androidx.compose.material.icons.outlined.Dashboard
 import androidx.compose.material.icons.outlined.Event
@@ -79,6 +80,7 @@ import com.iglesia.jovenes.domain.AdminMissionItem
 import com.iglesia.jovenes.domain.AdminStats
 import com.iglesia.jovenes.domain.AdminUserItem
 import com.iglesia.jovenes.domain.AuthUser
+import com.iglesia.jovenes.domain.EnrolledUserItem
 
 @Composable
 fun AdminHomeScreen(
@@ -96,6 +98,9 @@ fun AdminHomeScreen(
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val showCreateMission by viewModel.showCreateMissionDialog.collectAsStateWithLifecycle()
     val showCreateActivity by viewModel.showCreateActivityDialog.collectAsStateWithLifecycle()
+    val showEnrolledUsers by viewModel.showEnrolledUsersDialog.collectAsStateWithLifecycle()
+    val selectedActivity by viewModel.selectedActivity.collectAsStateWithLifecycle()
+    val enrolledUsers by viewModel.enrolledUsers.collectAsStateWithLifecycle()
 
     Scaffold(
         containerColor = AppBackground,
@@ -165,6 +170,7 @@ fun AdminHomeScreen(
                     AdminTab.ACTIVITIES -> ActivitiesTabContent(
                         activities = activities,
                         onToggleActivityStatus = { id, status -> viewModel.toggleActivityStatus(id, status) },
+                        onViewEnrolledUsers = { viewModel.openEnrolledUsersDialog(it) },
                     )
 
                     AdminTab.SETTINGS -> SettingsTabContent(
@@ -176,7 +182,7 @@ fun AdminHomeScreen(
         }
     }
 
-    // Diálogos de Creación
+    // Diálogos de Creación y Ver Inscritos
     if (showCreateMission) {
         CreateMissionDialog(
             onDismiss = { viewModel.setShowCreateMissionDialog(false) },
@@ -189,6 +195,17 @@ fun AdminHomeScreen(
             onDismiss = { viewModel.setShowCreateActivityDialog(false) },
             onCreate = { title, desc, loc, cap, baseP, bonusP ->
                 viewModel.createActivity(title, desc, loc, cap, baseP, bonusP)
+            },
+        )
+    }
+
+    if (showEnrolledUsers && selectedActivity != null) {
+        EnrolledUsersDialog(
+            activity = selectedActivity!!,
+            enrolledUsers = enrolledUsers,
+            onDismiss = { viewModel.setShowEnrolledUsersDialog(false) },
+            onMarkAttendance = { userId ->
+                viewModel.markAttendance(userId, selectedActivity!!.id, selectedActivity!!.totalPoints)
             },
         )
     }
@@ -507,7 +524,7 @@ private fun UserAdminCard(
                 )
 
                 user.age?.let { age ->
-                    Text("Age: $age", style = MaterialTheme.typography.bodySmall, color = MutedText)
+                    Text("Edad: $age", style = MaterialTheme.typography.bodySmall, color = MutedText)
                 }
 
                 Spacer(Modifier.width(12.dp))
@@ -565,6 +582,7 @@ private fun MissionsTabContent(
 private fun ActivitiesTabContent(
     activities: List<AdminActivityItem>,
     onToggleActivityStatus: (Int, String) -> Unit,
+    onViewEnrolledUsers: (AdminActivityItem) -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 12.dp),
@@ -589,7 +607,13 @@ private fun ActivitiesTabContent(
                         Text("${activity.currentCapacity}/${activity.maxCapacity} cupos", style = MaterialTheme.typography.labelSmall, color = NeonCyan)
                     }
                     Row(modifier = Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text("Estado: ${activity.status}", style = MaterialTheme.typography.labelSmall, color = if (activity.isActive) NeonCyan else MutedText)
+                        OutlinedButton(
+                            onClick = { onViewEnrolledUsers(activity) },
+                            shape = RoundedCornerShape(10.dp),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
+                        ) {
+                            Text("Inscritos (${activity.currentCapacity})", fontSize = 12.sp, color = NeonCyan)
+                        }
                         Spacer(Modifier.weight(1f))
                         TextButton(onClick = { onToggleActivityStatus(activity.id, activity.status) }) {
                             Text(if (activity.isActive) "Desactivar" else "Activar", color = if (activity.isActive) Color(0xFFFF6B6B) else NeonCyan)
@@ -599,6 +623,84 @@ private fun ActivitiesTabContent(
             }
         }
     }
+}
+
+@Composable
+private fun EnrolledUsersDialog(
+    activity: AdminActivityItem,
+    enrolledUsers: List<EnrolledUserItem>,
+    onDismiss: () -> Unit,
+    onMarkAttendance: (Int) -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = CardSurface,
+        title = {
+            Column {
+                Text("Jóvenes Inscritos", color = Color.White, fontWeight = FontWeight.Bold)
+                Text(activity.title, color = MutedText, style = MaterialTheme.typography.bodySmall)
+            }
+        },
+        text = {
+            if (enrolledUsers.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text("Aún no hay jóvenes inscritos a esta actividad.", color = MutedText, fontSize = 13.sp)
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth().height(260.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    items(enrolledUsers, key = { it.userId }) { user ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(AppBackground, RoundedCornerShape(12.dp))
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(user.fullName, fontWeight = FontWeight.Bold, color = Color.White, fontSize = 14.sp)
+                                Text(user.email, color = MutedText, fontSize = 11.sp)
+                            }
+
+                            if (user.isCompleted) {
+                                Box(
+                                    modifier = Modifier
+                                        .background(Color(0xFF1E3B2A), RoundedCornerShape(8.dp))
+                                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                                ) {
+                                    Text("Asistió ✓ (+${user.earnedPoints} XP)", color = Color(0xFF6BFFB8), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                }
+                            } else {
+                                Button(
+                                    onClick = { onMarkAttendance(user.userId) },
+                                    colors = ButtonDefaults.buttonColors(containerColor = NeonCyan, contentColor = AppBackground),
+                                    shape = RoundedCornerShape(10.dp),
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                                ) {
+                                    Icon(Icons.Outlined.Check, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(Modifier.width(4.dp))
+                                    Text("Asistencia", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onDismiss,
+                colors = ButtonDefaults.buttonColors(containerColor = ElectricPurple),
+            ) {
+                Text("Cerrar")
+            }
+        },
+    )
 }
 
 @Composable

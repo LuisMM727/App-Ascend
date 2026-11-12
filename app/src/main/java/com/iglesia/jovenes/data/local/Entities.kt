@@ -79,7 +79,7 @@ data class ActivityEntity(
     indices = [Index(value = ["FK_Usuarios", "FK_Actividades"], unique = true)],
 )
 data class EnrollmentEntity(
-    @PrimaryKey @ColumnInfo(name = "ID_Inscripciones") val id: Int,
+    @PrimaryKey(autoGenerate = true) @ColumnInfo(name = "ID_Inscripciones") val id: Int = 0,
     @ColumnInfo(name = "FK_Usuarios") val userId: Int,
     @ColumnInfo(name = "FK_Actividades") val activityId: Int,
     @ColumnInfo(name = "Fecha_inscripcion") val enrolledAt: Long,
