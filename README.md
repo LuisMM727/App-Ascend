@@ -1,6 +1,6 @@
-# Pastoral Juvenil App
+# Ascend App
 
-## Objetivo del Proyecto
+## Objetivo del Proyecto APP
 Aplicación móvil Android gamificada para incrementar la motivación
 y el sentido de pertenencia de los jóvenes en las actividades de
 la Iglesia Pastoral de Colonias Unidas.
