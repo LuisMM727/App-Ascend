@@ -1,20 +1,24 @@
-# HOME Android — Iglesia Joven
+# Pastoral Juvenil App
 
-Módulo Android independiente con Kotlin, Jetpack Compose, Room, MVVM y Repository Pattern.
+## Objetivo del Proyecto
+Aplicación móvil Android gamificada para incrementar la motivación
+y el sentido de pertenencia de los jóvenes en las actividades de
+la Iglesia Pastoral de Colonias Unidas.
 
-## Abrir
+## Entorno de Programación
 
-Abra la carpeta `android-home` como proyecto en Android Studio, sincronice Gradle y ejecute `app`.
+| Componente        | Tecnología                        |
+|-------------------|-----------------------------------|
+| Lenguaje          | Kotlin                            |
+| IDE               | Android Studio                    |
+| Base de Datos     | SQLite con Room                   |
+| Notificaciones    | Firebase Cloud Messaging (FCM)    |
+| Control Versiones | Git / GitHub                      |
+| SDK mínimo        | Android 8.0 (API 26)              |
 
-## Datos
-
-Las entidades respetan los nombres del esquema SQL oficial. `MainActivity` usa el usuario `1`
-como sesión de demostración. Antes de mostrar datos se debe poblar Room desde la API REST o
-mediante un callback de base de datos.
-
-Las fechas se almacenan como epoch milliseconds (`Long`). La contraseña solo se conserva en la
-entidad para reflejar el esquema recibido; una aplicación real debe autenticar contra el backend
-y guardar únicamente tokens cifrados con Android Keystore.
-
-El esquema entregado no contiene rachas, monedas ni progreso independiente de misión. El progreso
-de la misión se calcula a partir de sus actividades e inscripciones completadas.
+## Dependencias principales (build.gradle)
+- room-runtime
+- room-ktx
+- firebase-messaging
+- lifecycle-viewmodel-ktx
+- navigation-fragment-ktx
