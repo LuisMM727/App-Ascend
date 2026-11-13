@@ -16,7 +16,7 @@ interface AuthDao {
     @Query("SELECT Nombre FROM ROLES WHERE ID_Rol = :roleId LIMIT 1")
     suspend fun getRoleName(roleId: Int): String?
 
-    @Insert(onConflict = OnConflictStrategy.ABORT)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertUser(user: UserEntity): Long
 
     @Query("UPDATE USUARIOS SET Iglesia = :church, Edad = :age, Telefono = :phone, PerfilCompletado = 1 WHERE ID_Usuarios = :userId")

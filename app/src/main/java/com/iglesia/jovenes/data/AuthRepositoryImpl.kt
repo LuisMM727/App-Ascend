@@ -15,8 +15,63 @@ class AuthRepositoryImpl(
 
     override suspend fun login(email: String, password: String): Result<AuthUser> = runCatching {
         val cleanEmail = email.trim().lowercase()
-        val user = authDao.getUserByEmail(cleanEmail)
-            ?: error("No existe una cuenta registrada con el correo ingresado.")
+        var user = authDao.getUserByEmail(cleanEmail)
+
+        // Autogeneración defensiva para Administrador por defecto si no existiera en la BD
+        if (user == null && cleanEmail == "admin@iglesia.com" && password == "admin123") {
+            val adminUser = UserEntity(
+                id = 99,
+                name = "Administrador",
+                lastName = "General",
+                email = "admin@iglesia.com",
+                passwordHash = "admin123",
+                status = "ACTIVO",
+                failedAttempts = 0,
+                blockedUntil = null,
+                registeredAt = System.currentTimeMillis(),
+                roleId = 1,
+                church = "Iglesia Central",
+                age = 30,
+                phone = "0981000000",
+                isProfileComplete = true,
+            )
+            authDao.insertUser(adminUser)
+            user = adminUser
+        }
+
+        // Autogeneración defensiva para Usuario Joven por defecto si no existiera en la BD
+        if (user == null && cleanEmail == "luis@email.com" && password == "123456") {
+            val defaultUser = UserEntity(
+                id = 1,
+                name = "Luis",
+                lastName = "Morinigo",
+                email = "luis@email.com",
+                passwordHash = "123456",
+                status = "ACTIVO",
+                failedAttempts = 0,
+                blockedUntil = null,
+                registeredAt = System.currentTimeMillis(),
+                roleId = 2,
+                church = "Iglesia Central",
+                age = 22,
+                phone = "0981123456",
+                isProfileComplete = true,
+            )
+            authDao.insertUser(defaultUser)
+            val userPoints = UserPointsEntity(
+                id = 1,
+                userId = 1,
+                accumulatedPoints = 1200,
+                levelId = 1,
+                updatedAt = System.currentTimeMillis(),
+            )
+            authDao.insertUserPoints(userPoints)
+            user = defaultUser
+        }
+
+        if (user == null) {
+            error("No existe una cuenta registrada con el correo ingresado.")
+        }
 
         if (user.passwordHash != password) {
             error("La contraseña ingresada es incorrecta.")
