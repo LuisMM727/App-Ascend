@@ -40,10 +40,10 @@ abstract class AdminDao {
                u.Iglesia AS church,
                u.Edad AS age,
                u.Telefono AS phone,
-               r.Nombre AS roleName,
+               COALESCE(r.Nombre, 'JUVENIL') AS roleName,
                COALESCE(up.Puntos_acumulados, 0) AS points
         FROM USUARIOS u
-        JOIN ROLES r ON r.ID_Rol = u.FK_Rol
+        LEFT JOIN ROLES r ON r.ID_Rol = u.FK_Rol
         LEFT JOIN USUARIO_PUNTOS up ON up.FK_Usuarios = u.ID_Usuarios
         ORDER BY u.ID_Usuarios DESC
         """
