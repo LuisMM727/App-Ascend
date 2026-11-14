@@ -48,9 +48,9 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -86,18 +86,56 @@ enum class HomeDestination(val label: String, val icon: ImageVector) {
 @Composable
 fun HomeRoute(
     viewModel: HomeViewModel,
+    profileViewModel: ProfileViewModel,
     onLogout: () -> Unit = {},
-    onDestinationSelected: (HomeDestination) -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    HomeScreen(
-        state = state,
-        onRetry = viewModel::refresh,
-        onLogout = onLogout,
-        onEnroll = viewModel::enrollInActivity,
-        onCancelEnrollment = viewModel::cancelEnrollment,
-        onDestinationSelected = onDestinationSelected,
-    )
+    var currentDestination by remember { mutableStateOf(HomeDestination.Home) }
+
+    Scaffold(
+        containerColor = AppBackground,
+        bottomBar = {
+            HomeBottomBar(
+                selectedDestination = currentDestination,
+                onSelected = { destination ->
+                    currentDestination = destination
+                    if (destination == HomeDestination.Home) viewModel.refresh()
+                    if (destination == HomeDestination.Profile) profileViewModel.loadProfile()
+                },
+            )
+        },
+    ) { padding ->
+        when (currentDestination) {
+            HomeDestination.Home -> {
+                HomeScreen(
+                    state = state,
+                    onRetry = viewModel::refresh,
+                    onLogout = onLogout,
+                    onEnroll = viewModel::enrollInActivity,
+                    onCancelEnrollment = viewModel::cancelEnrollment,
+                    modifier = Modifier.padding(padding),
+                )
+            }
+
+            HomeDestination.Profile -> {
+                ProfileRoute(
+                    viewModel = profileViewModel,
+                    modifier = Modifier.padding(padding),
+                )
+            }
+
+            else -> {
+                HomeScreen(
+                    state = state,
+                    onRetry = viewModel::refresh,
+                    onLogout = onLogout,
+                    onEnroll = viewModel::enrollInActivity,
+                    onCancelEnrollment = viewModel::cancelEnrollment,
+                    modifier = Modifier.padding(padding),
+                )
+            }
+        }
+    }
 }
 
 @Composable
@@ -107,20 +145,19 @@ fun HomeScreen(
     onLogout: () -> Unit,
     onEnroll: (Int) -> Unit,
     onCancelEnrollment: (Int) -> Unit,
-    onDestinationSelected: (HomeDestination) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Scaffold(
-        containerColor = AppBackground,
-        bottomBar = { HomeBottomBar(onDestinationSelected) },
-    ) { padding ->
+    Box(
+        modifier = modifier.fillMaxSize().background(AppBackground),
+    ) {
         when (state) {
             HomeUiState.Loading -> Box(
-                Modifier.fillMaxSize().padding(padding),
+                Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center,
             ) { CircularProgressIndicator(color = NeonCyan) }
 
             is HomeUiState.Error -> Column(
-                Modifier.fillMaxSize().padding(padding).padding(24.dp),
+                Modifier.fillMaxSize().padding(24.dp),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
@@ -135,7 +172,6 @@ fun HomeScreen(
                 onLogout = onLogout,
                 onEnroll = onEnroll,
                 onCancelEnrollment = onCancelEnrollment,
-                modifier = Modifier.padding(padding),
             )
         }
     }
@@ -229,10 +265,12 @@ private fun UserHeaderCard(header: UserHeader, onLogout: () -> Unit) {
                     fontWeight = FontWeight.Bold,
                 )
             }
+
             val safeProgress = remember(header.progress) {
                 if (header.progress.isNaN() || header.progress.isInfinite()) 0f
                 else header.progress.coerceIn(0f, 1f)
             }
+
             LinearProgressIndicator(
                 progress = { safeProgress },
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp).height(8.dp).clip(CircleShape),
@@ -545,11 +583,14 @@ private fun SectionTitle(title: String, subtitle: String) {
 }
 
 @Composable
-private fun HomeBottomBar(onSelected: (HomeDestination) -> Unit) {
+private fun HomeBottomBar(
+    selectedDestination: HomeDestination,
+    onSelected: (HomeDestination) -> Unit,
+) {
     NavigationBar(containerColor = AppBackground) {
         HomeDestination.entries.forEach { destination ->
             NavigationBarItem(
-                selected = destination == HomeDestination.Home,
+                selected = destination == selectedDestination,
                 onClick = { onSelected(destination) },
                 icon = { Icon(destination.icon, destination.label) },
                 label = { Text(destination.label) },

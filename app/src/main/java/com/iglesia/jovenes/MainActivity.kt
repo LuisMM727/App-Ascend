@@ -17,6 +17,8 @@ import com.iglesia.jovenes.presentation.HomeRoute
 import com.iglesia.jovenes.presentation.HomeViewModel
 import com.iglesia.jovenes.presentation.HomeViewModelFactory
 import com.iglesia.jovenes.presentation.OnboardingScreen
+import com.iglesia.jovenes.presentation.ProfileViewModel
+import com.iglesia.jovenes.presentation.ProfileViewModelFactory
 import com.iglesia.jovenes.presentation.YouthTheme
 
 class MainActivity : ComponentActivity() {
@@ -84,8 +86,16 @@ class MainActivity : ComponentActivity() {
                                 userId = currentAuthState.user.id,
                             ),
                         )
+                        val profileViewModel: ProfileViewModel = viewModel(
+                            key = "profile_user_${currentAuthState.user.id}",
+                            factory = ProfileViewModelFactory(
+                                profileRepository = app.profileRepository,
+                                userId = currentAuthState.user.id,
+                            ),
+                        )
                         HomeRoute(
                             viewModel = homeViewModel,
+                            profileViewModel = profileViewModel,
                             onLogout = { authViewModel.logout() },
                         )
                     }

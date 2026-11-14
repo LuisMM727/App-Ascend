@@ -19,7 +19,7 @@ import kotlinx.coroutines.CoroutineScope
         BadgeEntity::class,
         MissionActivityEntity::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = false,
 )
 abstract class ChurchDatabase : RoomDatabase() {
@@ -27,6 +27,7 @@ abstract class ChurchDatabase : RoomDatabase() {
     abstract fun homeDao(): HomeDao
     abstract fun authDao(): AuthDao
     abstract fun adminDao(): AdminDao
+    abstract fun profileDao(): ProfileDao
 
     companion object {
         @Volatile
@@ -107,6 +108,32 @@ abstract class ChurchDatabase : RoomDatabase() {
                     """
                     INSERT OR IGNORE INTO ACTIVIDADES (ID_Actividades, Titulo, Descripcion, Fecha, Lugar, Cupo_maximo, Cupo_actual, Puntos_base, Puntos_bonificacion, Estado, Fecha_publicacion, FK_Usuarios)
                     VALUES (1, 'Reunión de Jóvenes Ascend', 'Noche de adoración, palabra y convivencia', $nextWeek, 'Auditorio Principal', 50, 12, 100, 50, 'ACTIVA', $now, 99)
+                    """
+                )
+
+                // 8. Insignias Semilla
+                db.execSQL(
+                    """
+                    INSERT OR IGNORE INTO INSIGNIAS (ID_Insignias, Nombre, Descripcion, Imagen_url, Condicion_tipo, Condicion_valor)
+                    VALUES (1, 'Primer Paso', 'Completar el registro inicial e ingresar a la comunidad Ascend', NULL, 'PUNTOS', 100)
+                    """
+                )
+                db.execSQL(
+                    """
+                    INSERT OR IGNORE INTO INSIGNIAS (ID_Insignias, Nombre, Descripcion, Imagen_url, Condicion_tipo, Condicion_valor)
+                    VALUES (2, 'Servidor Fiel', 'Avanzar al nivel intermedio de servicio comunitario', NULL, 'PUNTOS', 500)
+                    """
+                )
+                db.execSQL(
+                    """
+                    INSERT OR IGNORE INTO INSIGNIAS (ID_Insignias, Nombre, Descripcion, Imagen_url, Condicion_tipo, Condicion_valor)
+                    VALUES (3, 'Embajador de Fe', 'Demostrar liderazgo constante y acumular +1200 XP', NULL, 'PUNTOS', 1200)
+                    """
+                )
+                db.execSQL(
+                    """
+                    INSERT OR IGNORE INTO INSIGNIAS (ID_Insignias, Nombre, Descripcion, Imagen_url, Condicion_tipo, Condicion_valor)
+                    VALUES (4, 'Líder Inspirador', 'Alcanzar el rango máximo con más de 2000 XP acumulados', NULL, 'PUNTOS', 2000)
                     """
                 )
             } catch (e: Exception) {
