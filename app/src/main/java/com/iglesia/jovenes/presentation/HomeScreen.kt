@@ -88,6 +88,7 @@ fun HomeRoute(
     viewModel: HomeViewModel,
     profileViewModel: ProfileViewModel,
     missionsViewModel: MissionsViewModel,
+    leaderboardViewModel: LeaderboardViewModel,
     onLogout: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -102,6 +103,7 @@ fun HomeRoute(
                     currentDestination = destination
                     if (destination == HomeDestination.Home) viewModel.refresh()
                     if (destination == HomeDestination.Missions) missionsViewModel.loadMissions()
+                    if (destination == HomeDestination.Ranking) leaderboardViewModel.loadLeaderboard()
                     if (destination == HomeDestination.Profile) profileViewModel.loadProfile()
                 },
             )
@@ -126,20 +128,16 @@ fun HomeRoute(
                 )
             }
 
-            HomeDestination.Profile -> {
-                ProfileRoute(
-                    viewModel = profileViewModel,
+            HomeDestination.Ranking -> {
+                LeaderboardRoute(
+                    viewModel = leaderboardViewModel,
                     modifier = Modifier.padding(padding),
                 )
             }
 
-            else -> {
-                HomeScreen(
-                    state = state,
-                    onRetry = viewModel::refresh,
-                    onLogout = onLogout,
-                    onEnroll = viewModel::enrollInActivity,
-                    onCancelEnrollment = viewModel::cancelEnrollment,
+            HomeDestination.Profile -> {
+                ProfileRoute(
+                    viewModel = profileViewModel,
                     modifier = Modifier.padding(padding),
                 )
             }

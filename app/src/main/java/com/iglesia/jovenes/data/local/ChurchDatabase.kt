@@ -19,7 +19,7 @@ import kotlinx.coroutines.CoroutineScope
         BadgeEntity::class,
         MissionActivityEntity::class,
     ],
-    version = 7,
+    version = 8,
     exportSchema = false,
 )
 abstract class ChurchDatabase : RoomDatabase() {
@@ -29,6 +29,7 @@ abstract class ChurchDatabase : RoomDatabase() {
     abstract fun adminDao(): AdminDao
     abstract fun profileDao(): ProfileDao
     abstract fun missionsDao(): MissionsDao
+    abstract fun leaderboardDao(): LeaderboardDao
 
     companion object {
         @Volatile
@@ -78,21 +79,30 @@ abstract class ChurchDatabase : RoomDatabase() {
                     """
                 )
 
-                // 4. Insertar Usuario Juvenil por defecto (FK_Rol = 2)
+                // 4. Insertar Usuarios Jóvenes para el Ranking
                 db.execSQL(
                     """
                     INSERT OR IGNORE INTO USUARIOS (ID_Usuarios, Nombre, Apellido, Correo, Password, Estado, Intentos_fallidos, Bloqueado_hasta, Fecha_registro, FK_Rol, Iglesia, Edad, Telefono, PerfilCompletado)
                     VALUES (1, 'Luis', 'Morinigo', 'luis@email.com', '123456', 'ACTIVO', 0, NULL, $now, 2, 'Iglesia Central', 22, '0981123456', 1)
                     """
                 )
-
-                // 5. Insertar Registro de Puntos asociado a Luis (FK_Usuarios = 1, FK_Nivel = 1)
                 db.execSQL(
                     """
-                    INSERT OR IGNORE INTO USUARIO_PUNTOS (ID_Usuarios_puntos, FK_Usuarios, Puntos_acumulados, FK_Nivel, Ultima_actualizacion)
-                    VALUES (1, 1, 1200, 1, $now)
+                    INSERT OR IGNORE INTO USUARIOS (ID_Usuarios, Nombre, Apellido, Correo, Password, Estado, Intentos_fallidos, Bloqueado_hasta, Fecha_registro, FK_Rol, Iglesia, Edad, Telefono, PerfilCompletado)
+                    VALUES (2, 'Mateo', 'Silva', 'mateo@email.com', '123456', 'ACTIVO', 0, NULL, $now, 2, 'Iglesia Central', 21, '0981222333', 1)
                     """
                 )
+                db.execSQL(
+                    """
+                    INSERT OR IGNORE INTO USUARIOS (ID_Usuarios, Nombre, Apellido, Correo, Password, Estado, Intentos_fallidos, Bloqueado_hasta, Fecha_registro, FK_Rol, Iglesia, Edad, Telefono, PerfilCompletado)
+                    VALUES (3, 'Sofía', 'Benítez', 'sofia@email.com', '123456', 'ACTIVO', 0, NULL, $now, 2, 'Parroquia San José', 20, '0981444555', 1)
+                    """
+                )
+
+                // 5. Insertar Puntos asociados a los Jóvenes
+                db.execSQL("INSERT OR IGNORE INTO USUARIO_PUNTOS (ID_Usuarios_puntos, FK_Usuarios, Puntos_acumulados, FK_Nivel, Ultima_actualizacion) VALUES (1, 1, 1200, 2, $now)")
+                db.execSQL("INSERT OR IGNORE INTO USUARIO_PUNTOS (ID_Usuarios_puntos, FK_Usuarios, Puntos_acumulados, FK_Nivel, Ultima_actualizacion) VALUES (2, 2, 1500, 3, $now)")
+                db.execSQL("INSERT OR IGNORE INTO USUARIO_PUNTOS (ID_Usuarios_puntos, FK_Usuarios, Puntos_acumulados, FK_Nivel, Ultima_actualizacion) VALUES (3, 3, 800, 2, $now)")
 
                 // 6. Misiones Semilla
                 val nextMonth = now + (30L * 24 * 60 * 60 * 1000)
@@ -116,30 +126,11 @@ abstract class ChurchDatabase : RoomDatabase() {
                 db.execSQL("INSERT OR IGNORE INTO MISION_ACTIVIDADES (ID_Mision_actividades, FK_Mision, FK_Actividades) VALUES (1, 1, 1)")
 
                 // 8. Insignias Semilla
-                db.execSQL(
-                    """
-                    INSERT OR IGNORE INTO INSIGNIAS (ID_Insignias, Nombre, Descripcion, Imagen_url, Condicion_tipo, Condicion_valor)
-                    VALUES (1, 'Primer Paso', 'Completar el registro inicial e ingresar a la comunidad Ascend', NULL, 'PUNTOS', 100)
-                    """
-                )
-                db.execSQL(
-                    """
-                    INSERT OR IGNORE INTO INSIGNIAS (ID_Insignias, Nombre, Descripcion, Imagen_url, Condicion_tipo, Condicion_valor)
-                    VALUES (2, 'Servidor Fiel', 'Avanzar al nivel intermedio de servicio comunitario', NULL, 'PUNTOS', 500)
-                    """
-                )
-                db.execSQL(
-                    """
-                    INSERT OR IGNORE INTO INSIGNIAS (ID_Insignias, Nombre, Descripcion, Imagen_url, Condicion_tipo, Condicion_valor)
-                    VALUES (3, 'Embajador de Fe', 'Demostrar liderazgo constante y acumular +1200 XP', NULL, 'PUNTOS', 1200)
-                    """
-                )
-                db.execSQL(
-                    """
-                    INSERT OR IGNORE INTO INSIGNIAS (ID_Insignias, Nombre, Descripcion, Imagen_url, Condicion_tipo, Condicion_valor)
-                    VALUES (4, 'Líder Inspirador', 'Alcanzar el rango máximo con más de 2000 XP acumulados', NULL, 'PUNTOS', 2000)
-                    """
-                )
+                db.execSQL("INSERT OR IGNORE INTO INSIGNIAS (ID_Insignias, Nombre, Descripcion, Imagen_url, Condicion_tipo, Condicion_valor) VALUES (1, 'Primer Paso', 'Completar el registro inicial e ingresar a la comunidad Ascend', NULL, 'PUNTOS', 100)")
+                db.execSQL("INSERT OR IGNORE INTO INSIGNIAS (ID_Insignias, Nombre, Descripcion, Imagen_url, Condicion_tipo, Condicion_valor) VALUES (2, 'Servidor Fiel', 'Avanzar al nivel intermedio de servicio comunitario', NULL, 'PUNTOS', 500)")
+                db.execSQL("INSERT OR IGNORE INTO INSIGNIAS (ID_Insignias, Nombre, Descripcion, Imagen_url, Condicion_tipo, Condicion_valor) VALUES (3, 'Embajador de Fe', 'Demostrar liderazgo constante y acumular +1200 XP', NULL, 'PUNTOS', 1200)")
+                db.execSQL("INSERT OR IGNORE INTO INSIGNIAS (ID_Insignias, Nombre, Descripcion, Imagen_url, Condicion_tipo, Condicion_valor) VALUES (4, 'Líder Inspirador', 'Alcanzar el rango máximo con más de 2000 XP acumulados', NULL, 'PUNTOS', 2000)")
+
             } catch (e: Exception) {
                 // Ignore gracefully
             }

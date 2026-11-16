@@ -16,6 +16,8 @@ import com.iglesia.jovenes.presentation.AuthViewModelFactory
 import com.iglesia.jovenes.presentation.HomeRoute
 import com.iglesia.jovenes.presentation.HomeViewModel
 import com.iglesia.jovenes.presentation.HomeViewModelFactory
+import com.iglesia.jovenes.presentation.LeaderboardViewModel
+import com.iglesia.jovenes.presentation.LeaderboardViewModelFactory
 import com.iglesia.jovenes.presentation.MissionsViewModel
 import com.iglesia.jovenes.presentation.MissionsViewModelFactory
 import com.iglesia.jovenes.presentation.OnboardingScreen
@@ -102,10 +104,18 @@ class MainActivity : ComponentActivity() {
                                 userId = currentAuthState.user.id,
                             ),
                         )
+                        val leaderboardViewModel: LeaderboardViewModel = viewModel(
+                            key = "leaderboard_user_${currentAuthState.user.id}",
+                            factory = LeaderboardViewModelFactory(
+                                leaderboardRepository = app.leaderboardRepository,
+                                userId = currentAuthState.user.id,
+                            ),
+                        )
                         HomeRoute(
                             viewModel = homeViewModel,
                             profileViewModel = profileViewModel,
                             missionsViewModel = missionsViewModel,
+                            leaderboardViewModel = leaderboardViewModel,
                             onLogout = { authViewModel.logout() },
                         )
                     }
