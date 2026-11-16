@@ -87,6 +87,7 @@ enum class HomeDestination(val label: String, val icon: ImageVector) {
 fun HomeRoute(
     viewModel: HomeViewModel,
     profileViewModel: ProfileViewModel,
+    missionsViewModel: MissionsViewModel,
     onLogout: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -100,6 +101,7 @@ fun HomeRoute(
                 onSelected = { destination ->
                     currentDestination = destination
                     if (destination == HomeDestination.Home) viewModel.refresh()
+                    if (destination == HomeDestination.Missions) missionsViewModel.loadMissions()
                     if (destination == HomeDestination.Profile) profileViewModel.loadProfile()
                 },
             )
@@ -113,6 +115,13 @@ fun HomeRoute(
                     onLogout = onLogout,
                     onEnroll = viewModel::enrollInActivity,
                     onCancelEnrollment = viewModel::cancelEnrollment,
+                    modifier = Modifier.padding(padding),
+                )
+            }
+
+            HomeDestination.Missions -> {
+                MissionsRoute(
+                    viewModel = missionsViewModel,
                     modifier = Modifier.padding(padding),
                 )
             }

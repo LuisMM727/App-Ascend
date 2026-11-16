@@ -19,7 +19,7 @@ import kotlinx.coroutines.CoroutineScope
         BadgeEntity::class,
         MissionActivityEntity::class,
     ],
-    version = 6,
+    version = 7,
     exportSchema = false,
 )
 abstract class ChurchDatabase : RoomDatabase() {
@@ -28,6 +28,7 @@ abstract class ChurchDatabase : RoomDatabase() {
     abstract fun authDao(): AuthDao
     abstract fun adminDao(): AdminDao
     abstract fun profileDao(): ProfileDao
+    abstract fun missionsDao(): MissionsDao
 
     companion object {
         @Volatile
@@ -110,6 +111,9 @@ abstract class ChurchDatabase : RoomDatabase() {
                     VALUES (1, 'Reunión de Jóvenes Ascend', 'Noche de adoración, palabra y convivencia', $nextWeek, 'Auditorio Principal', 50, 12, 100, 50, 'ACTIVA', $now, 99)
                     """
                 )
+
+                // Relación Misión - Actividad
+                db.execSQL("INSERT OR IGNORE INTO MISION_ACTIVIDADES (ID_Mision_actividades, FK_Mision, FK_Actividades) VALUES (1, 1, 1)")
 
                 // 8. Insignias Semilla
                 db.execSQL(

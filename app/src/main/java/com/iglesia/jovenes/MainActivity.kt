@@ -16,6 +16,8 @@ import com.iglesia.jovenes.presentation.AuthViewModelFactory
 import com.iglesia.jovenes.presentation.HomeRoute
 import com.iglesia.jovenes.presentation.HomeViewModel
 import com.iglesia.jovenes.presentation.HomeViewModelFactory
+import com.iglesia.jovenes.presentation.MissionsViewModel
+import com.iglesia.jovenes.presentation.MissionsViewModelFactory
 import com.iglesia.jovenes.presentation.OnboardingScreen
 import com.iglesia.jovenes.presentation.ProfileViewModel
 import com.iglesia.jovenes.presentation.ProfileViewModelFactory
@@ -93,9 +95,17 @@ class MainActivity : ComponentActivity() {
                                 userId = currentAuthState.user.id,
                             ),
                         )
+                        val missionsViewModel: MissionsViewModel = viewModel(
+                            key = "missions_user_${currentAuthState.user.id}",
+                            factory = MissionsViewModelFactory(
+                                missionsRepository = app.missionsRepository,
+                                userId = currentAuthState.user.id,
+                            ),
+                        )
                         HomeRoute(
                             viewModel = homeViewModel,
                             profileViewModel = profileViewModel,
+                            missionsViewModel = missionsViewModel,
                             onLogout = { authViewModel.logout() },
                         )
                     }
