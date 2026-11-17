@@ -1,8 +1,10 @@
 package com.iglesia.jovenes.presentation
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.iglesia.jovenes.data.NotificationHelper
 import com.iglesia.jovenes.domain.AdminActivityItem
 import com.iglesia.jovenes.domain.AdminLevelItem
 import com.iglesia.jovenes.domain.AdminMissionItem
@@ -108,10 +110,13 @@ class AdminViewModel(
         }
     }
 
-    fun markAttendance(userId: Int, activityId: Int, points: Int) {
+    fun markAttendance(userId: Int, activityId: Int, points: Int, context: Context? = null, activityTitle: String = "") {
         viewModelScope.launch {
             adminRepository.markAttendance(userId, activityId, points)
                 .onSuccess {
+                    if (context != null && activityTitle.isNotBlank()) {
+                        NotificationHelper.sendXpGainedNotification(context, points, activityTitle)
+                    }
                     loadEnrolledUsers(activityId)
                     loadData()
                 }

@@ -1,8 +1,10 @@
 package com.iglesia.jovenes.presentation
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.iglesia.jovenes.data.NotificationHelper
 import com.iglesia.jovenes.domain.HomeData
 import com.iglesia.jovenes.domain.HomeRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,10 +42,15 @@ class HomeViewModel(
         }
     }
 
-    fun enrollInActivity(activityId: Int) {
+    fun enrollInActivity(activityId: Int, context: Context? = null, title: String? = null, location: String? = null) {
         viewModelScope.launch {
             repository.enrollInActivity(userId, activityId)
-                .onSuccess { refresh() }
+                .onSuccess {
+                    if (context != null && !title.isNullOrBlank() && !location.isNullOrBlank()) {
+                        NotificationHelper.sendEnrollmentNotification(context, title, location)
+                    }
+                    refresh()
+                }
                 .onFailure { refresh() }
         }
     }

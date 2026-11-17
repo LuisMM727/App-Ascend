@@ -68,6 +68,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
@@ -200,12 +201,19 @@ fun AdminHomeScreen(
     }
 
     if (showEnrolledUsers && selectedActivity != null) {
+        val context = LocalContext.current
         EnrolledUsersDialog(
             activity = selectedActivity!!,
             enrolledUsers = enrolledUsers,
             onDismiss = { viewModel.setShowEnrolledUsersDialog(false) },
             onMarkAttendance = { userId ->
-                viewModel.markAttendance(userId, selectedActivity!!.id, selectedActivity!!.totalPoints)
+                viewModel.markAttendance(
+                    userId = userId,
+                    activityId = selectedActivity!!.id,
+                    points = selectedActivity!!.totalPoints,
+                    context = context,
+                    activityTitle = selectedActivity!!.title,
+                )
             },
         )
     }

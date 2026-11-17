@@ -1,5 +1,6 @@
 package com.iglesia.jovenes.presentation
 
+import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
@@ -62,6 +63,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -115,7 +117,7 @@ fun HomeRoute(
                     state = state,
                     onRetry = viewModel::refresh,
                     onLogout = onLogout,
-                    onEnroll = viewModel::enrollInActivity,
+                    onEnroll = { id, ctx, title, loc -> viewModel.enrollInActivity(id, ctx, title, loc) },
                     onCancelEnrollment = viewModel::cancelEnrollment,
                     modifier = Modifier.padding(padding),
                 )
@@ -150,7 +152,7 @@ fun HomeScreen(
     state: HomeUiState,
     onRetry: () -> Unit,
     onLogout: () -> Unit,
-    onEnroll: (Int) -> Unit,
+    onEnroll: (Int, Context, String, String) -> Unit,
     onCancelEnrollment: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -188,7 +190,7 @@ fun HomeScreen(
 private fun HomeContent(
     data: HomeData,
     onLogout: () -> Unit,
-    onEnroll: (Int) -> Unit,
+    onEnroll: (Int, Context, String, String) -> Unit,
     onCancelEnrollment: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -213,7 +215,7 @@ private fun HomeContent(
         items(data.activities, key = { it.activityId }) { activity ->
             ActivityCard(
                 activity = activity,
-                onEnroll = { onEnroll(activity.activityId) },
+                onEnroll = { ctx, title, loc -> onEnroll(activity.activityId, ctx, title, loc) },
                 onCancelEnrollment = { onCancelEnrollment(activity.activityId) },
             )
         }
@@ -455,9 +457,10 @@ private fun MissionCard(mission: FeaturedMission) {
 @Composable
 private fun ActivityCard(
     activity: HomeActivity,
-    onEnroll: () -> Unit,
+    onEnroll: (Context, String, String) -> Unit,
     onCancelEnrollment: () -> Unit,
 ) {
+    val context = LocalContext.current
     val isEnrolled = activity.enrollmentStatus != null
     val isFull = activity.currentCapacity >= activity.maximumCapacity
 
@@ -537,7 +540,7 @@ private fun ActivityCard(
                 } else {
                     Spacer(Modifier.weight(1f))
                     Button(
-                        onClick = onEnroll,
+                        onClick = { onEnroll(context, activity.title, activity.location) },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = ElectricPurple,
                             contentColor = Color.White,
