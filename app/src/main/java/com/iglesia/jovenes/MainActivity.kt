@@ -29,10 +29,15 @@ import com.iglesia.jovenes.presentation.ProfileViewModel
 import com.iglesia.jovenes.presentation.ProfileViewModelFactory
 import com.iglesia.jovenes.presentation.YouthTheme
 
+/**
+ * Actividad Principal de la aplicación Ascend.
+ * Coordina la inicialización de notificaciones, permisos y la navegación en Jetpack Compose según el estado de autenticación.
+ */
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Inicializar canal de notificaciones y solicitar permisos en Android 13+
         try {
             NotificationHelper.createNotificationChannel(this)
 
@@ -42,12 +47,13 @@ class MainActivity : ComponentActivity() {
                 }
             }
         } catch (t: Throwable) {
-            // Ignore gracefully
+            // Protección contra excepciones al solicitar permisos en tiempo de ejecución
         }
 
         val app = application as YouthApplication
         setContent {
             YouthTheme {
+                // ViewModel principal de Autenticación
                 val authViewModel: AuthViewModel = viewModel(
                     factory = AuthViewModelFactory(app.authRepository),
                 )
@@ -57,7 +63,9 @@ class MainActivity : ComponentActivity() {
                 val isLoading by authViewModel.isLoading.collectAsStateWithLifecycle()
                 val errorMessage by authViewModel.errorMessage.collectAsStateWithLifecycle()
 
+                // Navegación principal basada en el estado de AuthState
                 when (val currentAuthState = authState) {
+                    // Estado 1: Sesión no iniciada -> Mostrar pantalla de Login / Registro
                     is AuthState.LoggedOut -> {
                         AuthScreen(
                             viewModel = authViewModel,
@@ -67,6 +75,7 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
+                    // Estado 2: Perfil pendiente -> Mostrar formulario de completado (Iglesia, Edad)
                     is AuthState.OnboardingRequired -> {
                         OnboardingScreen(
                             user = currentAuthState.user,
@@ -83,6 +92,7 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
+                    // Estado 3: Administrador Autenticado -> Panel de Gestión Admin
                     is AuthState.LoggedInAdmin -> {
                         val adminViewModel: AdminViewModel = viewModel(
                             key = "admin_user_${currentAuthState.user.id}",
@@ -98,6 +108,7 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
+                    // Estado 4: Joven / Usuario Autenticado -> Pantalla Principal (Home, Misiones, Clasificación, Perfil)
                     is AuthState.LoggedInUser -> {
                         val homeViewModel: HomeViewModel = viewModel(
                             key = "home_user_${currentAuthState.user.id}",
