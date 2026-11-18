@@ -41,13 +41,24 @@ interface ProfileDao {
                u.Telefono AS phone,
                COALESCE(r.Nombre, 'JUVENIL') AS roleName,
                COALESCE(up.Puntos_acumulados, 0) AS accumulatedPoints,
-               COALESCE(n.Nombre, 'Líder Juvenil') AS levelName,
-               COALESCE(n.Orden, 1) AS levelOrder,
-               COALESCE(n.Puntos_requeridos, 100) AS requiredPoints
+               COALESCE(
+                   (SELECT n.Nombre FROM NIVELES n WHERE COALESCE(up.Puntos_acumulados, 0) >= n.Puntos_requeridos ORDER BY n.Orden DESC LIMIT 1),
+                   'Líder Juvenil'
+               ) AS levelName,
+               COALESCE(
+                   (SELECT n.Orden FROM NIVELES n WHERE COALESCE(up.Puntos_acumulados, 0) >= n.Puntos_requeridos ORDER BY n.Orden DESC LIMIT 1),
+                   1
+               ) AS levelOrder,
+               COALESCE(
+                   (SELECT n.Puntos_requeridos FROM NIVELES n WHERE n.Orden > (
+                       SELECT COALESCE(n2.Orden, 1) FROM NIVELES n2 WHERE COALESCE(up.Puntos_acumulados, 0) >= n2.Puntos_requeridos ORDER BY n2.Orden DESC LIMIT 1
+                   ) ORDER BY n.Orden ASC LIMIT 1),
+                   (SELECT MAX(n3.Puntos_requeridos) FROM NIVELES n3),
+                   100
+               ) AS requiredPoints
         FROM USUARIOS u
         LEFT JOIN ROLES r ON r.ID_Rol = u.FK_Rol
         LEFT JOIN USUARIO_PUNTOS up ON up.FK_Usuarios = u.ID_Usuarios
-        LEFT JOIN NIVELES n ON n.ID_Niveles = up.FK_Nivel
         WHERE u.ID_Usuarios = :userId
         LIMIT 1
         """

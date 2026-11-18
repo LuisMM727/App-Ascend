@@ -90,7 +90,18 @@ abstract class AdminDao {
     @Query("UPDATE INSCRIPCIONES SET Estado_asistencia = 'COMPLETADA', Puntos_ganados = :points WHERE FK_Usuarios = :userId AND FK_Actividades = :activityId")
     abstract suspend fun updateEnrollmentAttendance(userId: Int, activityId: Int, points: Int)
 
-    @Query("UPDATE USUARIO_PUNTOS SET Puntos_acumulados = Puntos_acumulados + :points, Ultima_actualizacion = :now WHERE FK_Usuarios = :userId")
+    @Query(
+        """
+        UPDATE USUARIO_PUNTOS 
+        SET FK_Nivel = COALESCE(
+            (SELECT n.ID_Niveles FROM NIVELES n WHERE (Puntos_acumulados + :points) >= n.Puntos_requeridos ORDER BY n.Orden DESC LIMIT 1),
+            FK_Nivel
+        ),
+        Puntos_acumulados = Puntos_acumulados + :points, 
+        Ultima_actualizacion = :now 
+        WHERE FK_Usuarios = :userId
+        """
+    )
     abstract suspend fun addPointsToUser(userId: Int, points: Int, now: Long)
 
     @Transaction
