@@ -1,10 +1,13 @@
 package com.iglesia.jovenes.data
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.iglesia.jovenes.R
@@ -16,20 +19,30 @@ object NotificationHelper {
     private const val CHANNEL_DESC = "Avisos de inscripciones a eventos y acreditación de puntos XP"
 
     fun createNotificationChannel(context: Context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val importance = NotificationManager.IMPORTANCE_DEFAULT
-            val channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, importance).apply {
-                description = CHANNEL_DESC
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val importance = NotificationManager.IMPORTANCE_DEFAULT
+                val channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, importance).apply {
+                    description = CHANNEL_DESC
+                }
+                val notificationManager: NotificationManager =
+                    context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                notificationManager.createNotificationChannel(channel)
             }
-            val notificationManager: NotificationManager =
-                context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
+        } catch (t: Throwable) {
+            // Safe guard
         }
     }
 
     @SuppressLint("MissingPermission")
     fun sendEnrollmentNotification(context: Context, activityTitle: String, location: String) {
         try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+            ) {
+                return
+            }
+
             val builder = NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
                 .setContentTitle("¡Inscripción Confirmada! 📌")
@@ -41,17 +54,21 @@ object NotificationHelper {
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setAutoCancel(true)
 
-            with(NotificationManagerCompat.from(context)) {
-                notify((System.currentTimeMillis() % 10000).toInt(), builder.build())
-            }
-        } catch (e: Exception) {
-            // Ignore permission missing or error gracefully
+            NotificationManagerCompat.from(context).notify((System.currentTimeMillis() % 10000).toInt(), builder.build())
+        } catch (t: Throwable) {
+            // Safe guard against any runtime permission or notification crash
         }
     }
 
     @SuppressLint("MissingPermission")
     fun sendXpGainedNotification(context: Context, points: Int, activityTitle: String) {
         try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+            ) {
+                return
+            }
+
             val builder = NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
                 .setContentTitle("¡Has ganado +$points XP! 🌟")
@@ -63,11 +80,9 @@ object NotificationHelper {
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true)
 
-            with(NotificationManagerCompat.from(context)) {
-                notify((System.currentTimeMillis() % 10000).toInt(), builder.build())
-            }
-        } catch (e: Exception) {
-            // Ignore gracefully
+            NotificationManagerCompat.from(context).notify((System.currentTimeMillis() % 10000).toInt(), builder.build())
+        } catch (t: Throwable) {
+            // Safe guard against any runtime permission or notification crash
         }
     }
 }
