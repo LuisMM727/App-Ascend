@@ -11,8 +11,15 @@ import com.iglesia.jovenes.domain.HomeData
 import com.iglesia.jovenes.domain.LeaderboardEntry
 import com.iglesia.jovenes.domain.UserHeader
 
+/**
+ * DAO para construir la pantalla principal (Home), inscripciones a eventos y consulta de nivel/XP.
+ */
 @Dao
 abstract class HomeDao {
+
+    /**
+     * Obtiene los datos del encabezado del usuario, calculando su nivel actual y la meta del siguiente nivel según sus XP acumulados.
+     */
     @Query(
         """
         SELECT u.ID_Usuarios AS userId,
@@ -41,6 +48,9 @@ abstract class HomeDao {
     )
     abstract suspend fun userHeader(userId: Int): UserHeader?
 
+    /**
+     * Consulta las misiones activas en el sistema con el número de tareas/actividades completadas por el usuario.
+     */
     @Query(
         """
         SELECT m.ID_Misiones AS missionId, m.Nombre AS name,
@@ -61,6 +71,9 @@ abstract class HomeDao {
     )
     abstract suspend fun activeMissions(userId: Int): List<FeaturedMission>
 
+    /**
+     * Obtiene las próximas 10 actividades comunitarias activas y verifica si el usuario está inscrito.
+     */
     @Query(
         """
         SELECT a.ID_Actividades AS activityId, a.Titulo AS title,
@@ -77,6 +90,9 @@ abstract class HomeDao {
     )
     abstract suspend fun upcomingActivities(userId: Int): List<HomeActivity>
 
+    /**
+     * Obtiene los top 3 líderes de la semana para el resumen del Home.
+     */
     @Query(
         """
         SELECT (
@@ -96,18 +112,33 @@ abstract class HomeDao {
     )
     abstract suspend fun leaderboard(): List<LeaderboardEntry>
 
+    /**
+     * Inserta la inscripción del usuario a una actividad.
+     */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     abstract suspend fun insertEnrollment(enrollment: EnrollmentEntity)
 
+    /**
+     * Elimina la inscripción del usuario a una actividad.
+     */
     @Query("DELETE FROM INSCRIPCIONES WHERE FK_Usuarios = :userId AND FK_Actividades = :activityId")
     abstract suspend fun deleteEnrollment(userId: Int, activityId: Int)
 
+    /**
+     * Incrementa el cupo ocupado de una actividad (+1).
+     */
     @Query("UPDATE ACTIVIDADES SET Cupo_actual = Cupo_actual + 1 WHERE ID_Actividades = :activityId AND Cupo_actual < Cupo_maximo")
     abstract suspend fun incrementActivityCapacity(activityId: Int)
 
+    /**
+     * Decrementa el cupo ocupado de una actividad (-1).
+     */
     @Query("UPDATE ACTIVIDADES SET Cupo_actual = MAX(0, Cupo_actual - 1) WHERE ID_Actividades = :activityId")
     abstract suspend fun decrementActivityCapacity(activityId: Int)
 
+    /**
+     * Proceso transaccional de inscripción a una actividad.
+     */
     @Transaction
     open suspend fun enrollUserInActivity(userId: Int, activityId: Int) {
         val enrollment = EnrollmentEntity(
@@ -122,12 +153,18 @@ abstract class HomeDao {
         incrementActivityCapacity(activityId)
     }
 
+    /**
+     * Proceso transaccional para cancelar la inscripción a una actividad.
+     */
     @Transaction
     open suspend fun cancelUserEnrollment(userId: Int, activityId: Int) {
         deleteEnrollment(userId, activityId)
         decrementActivityCapacity(activityId)
     }
 
+    /**
+     * Carga de forma atómica todos los datos requeridos para la pantalla principal (Home).
+     */
     @Transaction
     open suspend fun home(userId: Int, now: Long): HomeData? {
         val header = userHeader(userId) ?: return null

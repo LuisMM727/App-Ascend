@@ -3,6 +3,9 @@ package com.iglesia.jovenes.data.local
 import androidx.room.Dao
 import androidx.room.Query
 
+/**
+ * Mapeo de datos crudos de una Misión con su conteo de actividades completadas.
+ */
 data class MissionWithProgressRaw(
     val missionId: Int,
     val name: String,
@@ -15,6 +18,9 @@ data class MissionWithProgressRaw(
     val totalActivities: Int,
 )
 
+/**
+ * Mapeo de datos de una Actividad/Tarea vinculada a una Misión específica.
+ */
 data class MissionActivityTaskRaw(
     val activityId: Int,
     val title: String,
@@ -25,17 +31,24 @@ data class MissionActivityTaskRaw(
     val enrollmentStatus: String?,
 )
 
+/**
+ * DAO para consultas de la pantalla completa de Misiones y desglose de tareas asociadas.
+ */
 @Dao
 interface MissionsDao {
+
+    /**
+     * Obtiene todas las misiones registradas calculando cuántas actividades ha completado el usuario.
+     */
     @Query(
         """
         SELECT m.ID_Misiones AS missionId,
-               m.Nombre AS name,
-               m.Descripcion AS description,
-               m.Puntos_bonus AS bonusPoints,
-               m.Estado AS status,
-               m.Fecha_inicio AS startsAt,
-               m.Fecha_fin AS endsAt,
+               COALESCE(m.Nombre, 'Misión') AS name,
+               COALESCE(m.Descripcion, '') AS description,
+               COALESCE(m.Puntos_bonus, 0) AS bonusPoints,
+               COALESCE(m.Estado, 'ACTIVA') AS status,
+               COALESCE(m.Fecha_inicio, 0) AS startsAt,
+               COALESCE(m.Fecha_fin, 0) AS endsAt,
                COUNT(DISTINCT CASE WHEN i.Estado_asistencia IN ('COMPLETADA', 'ASISTIO') THEN ma.FK_Actividades END) AS completedActivities,
                COUNT(DISTINCT ma.FK_Actividades) AS totalActivities
         FROM MISIONES m
@@ -47,14 +60,17 @@ interface MissionsDao {
     )
     suspend fun getAllMissionsWithProgress(userId: Int): List<MissionWithProgressRaw>
 
+    /**
+     * Obtiene la lista de actividades comunitarias vinculadas a una misión dada, junto al estado de inscripción del usuario.
+     */
     @Query(
         """
         SELECT a.ID_Actividades AS activityId,
-               a.Titulo AS title,
-               a.Descripcion AS description,
-               a.Fecha AS date,
-               a.Lugar AS location,
-               (a.Puntos_base + a.Puntos_bonificacion) AS totalPoints,
+               COALESCE(a.Titulo, 'Actividad') AS title,
+               COALESCE(a.Descripcion, '') AS description,
+               COALESCE(a.Fecha, 0) AS date,
+               COALESCE(a.Lugar, 'Iglesia') AS location,
+               (COALESCE(a.Puntos_base, 0) + COALESCE(a.Puntos_bonificacion, 0)) AS totalPoints,
                i.Estado_asistencia AS enrollmentStatus
         FROM MISION_ACTIVIDADES ma
         JOIN ACTIVIDADES a ON a.ID_Actividades = ma.FK_Actividades
