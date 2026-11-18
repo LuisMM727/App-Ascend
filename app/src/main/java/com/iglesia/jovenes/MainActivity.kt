@@ -128,6 +128,7 @@ class MainActivity : ComponentActivity() {
                             key = "missions_user_${currentAuthState.user.id}",
                             factory = MissionsViewModelFactory(
                                 missionsRepository = app.missionsRepository,
+                                homeRepository = app.homeRepository,
                                 userId = currentAuthState.user.id,
                             ),
                         )

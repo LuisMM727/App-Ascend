@@ -1,5 +1,6 @@
 package com.iglesia.jovenes.presentation
 
+import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
@@ -26,11 +27,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Check
-import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Event
 import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
-import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material.icons.outlined.Stars
 import androidx.compose.material.icons.outlined.TrackChanges
 import androidx.compose.material3.Button
@@ -48,6 +47,7 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -58,6 +58,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -84,6 +85,8 @@ fun MissionsRoute(
         selectedFilter = selectedFilter,
         onFilterSelected = viewModel::setFilter,
         onRetry = viewModel::loadMissions,
+        onEnroll = { id, ctx, title, loc -> viewModel.enrollInActivity(id, ctx, title, loc) },
+        onCancelEnrollment = viewModel::cancelEnrollment,
         modifier = modifier,
     )
 }
@@ -94,6 +97,8 @@ fun MissionsScreen(
     selectedFilter: MissionsFilter,
     onFilterSelected: (MissionsFilter) -> Unit,
     onRetry: () -> Unit,
+    onEnroll: (Int, Context, String, String) -> Unit,
+    onCancelEnrollment: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(
@@ -118,6 +123,8 @@ fun MissionsScreen(
                 data = uiState.data,
                 selectedFilter = selectedFilter,
                 onFilterSelected = onFilterSelected,
+                onEnroll = onEnroll,
+                onCancelEnrollment = onCancelEnrollment,
             )
         }
     }
@@ -128,6 +135,8 @@ private fun MissionsContent(
     data: MissionsScreenData,
     selectedFilter: MissionsFilter,
     onFilterSelected: (MissionsFilter) -> Unit,
+    onEnroll: (Int, Context, String, String) -> Unit,
+    onCancelEnrollment: (Int) -> Unit,
 ) {
     val filteredMissions = remember(data.missions, selectedFilter) {
         when (selectedFilter) {
@@ -219,7 +228,11 @@ private fun MissionsContent(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 items(filteredMissions, key = { it.missionId }) { mission ->
-                    ExpandableMissionCard(mission = mission)
+                    ExpandableMissionCard(
+                        mission = mission,
+                        onEnroll = onEnroll,
+                        onCancelEnrollment = onCancelEnrollment,
+                    )
                 }
             }
         }
@@ -266,7 +279,11 @@ private fun MissionsFilterTabRow(
 }
 
 @Composable
-private fun ExpandableMissionCard(mission: MissionDetailItem) {
+private fun ExpandableMissionCard(
+    mission: MissionDetailItem,
+    onEnroll: (Int, Context, String, String) -> Unit,
+    onCancelEnrollment: (Int) -> Unit,
+) {
     var isExpanded by remember { mutableStateOf(false) }
 
     Column(
@@ -393,7 +410,11 @@ private fun ExpandableMissionCard(mission: MissionDetailItem) {
                     )
                 } else {
                     mission.activities.forEach { task ->
-                        TaskItemCard(task = task)
+                        TaskItemCard(
+                            task = task,
+                            onEnroll = { ctx, title, loc -> onEnroll(task.activityId, ctx, title, loc) },
+                            onCancelEnrollment = { onCancelEnrollment(task.activityId) },
+                        )
                     }
                 }
 
@@ -424,79 +445,111 @@ private fun ExpandableMissionCard(mission: MissionDetailItem) {
 }
 
 @Composable
-private fun TaskItemCard(task: MissionActivityTask) {
+private fun TaskItemCard(
+    task: MissionActivityTask,
+    onEnroll: (Context, String, String) -> Unit,
+    onCancelEnrollment: () -> Unit,
+) {
+    val context = LocalContext.current
+
     Card(
         colors = CardDefaults.cardColors(containerColor = CardSurface),
         shape = RoundedCornerShape(14.dp),
         border = BorderStroke(1.dp, Color.White.copy(alpha = 0.05f)),
     ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(32.dp)
-                    .background(
-                        if (task.isCompleted) Color(0xFF1E3B2A) else ElectricPurple.copy(alpha = 0.15f),
-                        CircleShape,
-                    ),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = if (task.isCompleted) Icons.Outlined.Check else Icons.Outlined.Event,
-                    contentDescription = null,
-                    tint = if (task.isCompleted) Color(0xFF6BFFB8) else ElectricPurple,
-                    modifier = Modifier.size(18.dp),
-                )
-            }
-
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 10.dp),
-            ) {
-                Text(
-                    text = task.title,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    fontSize = 13.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = "${task.location} · ${formatDateOnly(task.date)}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MutedText,
-                )
-            }
-
-            Box(
-                modifier = Modifier
-                    .background(
-                        when {
-                            task.isCompleted -> Color(0xFF1E3B2A)
-                            task.isEnrolled -> ElectricPurple.copy(alpha = 0.2f)
-                            else -> Color.White.copy(alpha = 0.06f)
-                        },
-                        RoundedCornerShape(8.dp),
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .background(
+                            if (task.isCompleted) Color(0xFF1E3B2A) else ElectricPurple.copy(alpha = 0.15f),
+                            CircleShape,
+                        ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = if (task.isCompleted) Icons.Outlined.Check else Icons.Outlined.Event,
+                        contentDescription = null,
+                        tint = if (task.isCompleted) Color(0xFF6BFFB8) else ElectricPurple,
+                        modifier = Modifier.size(18.dp),
                     )
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
-            ) {
+                }
+
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 10.dp),
+                ) {
+                    Text(
+                        text = task.title,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        fontSize = 13.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        text = "${task.location} · ${formatDateOnly(task.date)}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MutedText,
+                    )
+                }
+
                 Text(
-                    text = when {
-                        task.isCompleted -> "Completada ✓"
-                        task.isEnrolled -> "Inscrito ✓"
-                        else -> "Disponible"
-                    },
-                    fontSize = 10.sp,
+                    text = "+${task.totalPoints} XP",
+                    color = RewardGold,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
-                    color = when {
-                        task.isCompleted -> Color(0xFF6BFFB8)
-                        task.isEnrolled -> NeonCyan
-                        else -> MutedText
-                    },
                 )
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                when {
+                    task.isCompleted -> {
+                        Box(
+                            modifier = Modifier
+                                .background(Color(0xFF1E3B2A), RoundedCornerShape(8.dp))
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                        ) {
+                            Text("Completada ✓ (+${task.totalPoints} XP)", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF6BFFB8))
+                        }
+                    }
+
+                    task.isEnrolled -> {
+                        Box(
+                            modifier = Modifier
+                                .background(ElectricPurple.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                        ) {
+                            Text("Inscrito ✓", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = NeonCyan)
+                        }
+
+                        Spacer(Modifier.weight(1f))
+
+                        TextButton(onClick = onCancelEnrollment) {
+                            Text("Cancelar", color = Color(0xFFFF7A85), fontSize = 11.sp)
+                        }
+                    }
+
+                    else -> {
+                        Spacer(Modifier.weight(1f))
+
+                        Button(
+                            onClick = { onEnroll(context, task.title, task.location) },
+                            colors = ButtonDefaults.buttonColors(containerColor = ElectricPurple, contentColor = Color.White),
+                            shape = RoundedCornerShape(10.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                        ) {
+                            Text("Inscribirme", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
             }
         }
     }

@@ -124,7 +124,8 @@ class AdminRepositoryImpl(
             publishedAt = now,
             creatorUserId = creatorUserId,
         )
-        adminDao.insertActivity(entity)
+        val newId = adminDao.insertActivity(entity).toInt()
+        adminDao.linkActivityToActiveMissions(newId)
     }
 
     override suspend fun toggleActivityStatus(activityId: Int, currentStatus: String): Result<Unit> = runCatching {

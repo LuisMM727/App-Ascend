@@ -1,8 +1,11 @@
 package com.iglesia.jovenes.presentation
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.iglesia.jovenes.data.NotificationHelper
+import com.iglesia.jovenes.domain.HomeRepository
 import com.iglesia.jovenes.domain.MissionsRepository
 import com.iglesia.jovenes.domain.MissionsScreenData
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,6 +23,7 @@ sealed interface MissionsUiState {
 
 class MissionsViewModel(
     private val missionsRepository: MissionsRepository,
+    private val homeRepository: HomeRepository,
     private val userId: Int,
 ) : ViewModel() {
 
@@ -45,13 +49,35 @@ class MissionsViewModel(
                 .onFailure { _uiState.value = MissionsUiState.Error(it.message ?: "Error al cargar misiones.") }
         }
     }
+
+    fun enrollInActivity(activityId: Int, context: Context? = null, title: String? = null, location: String? = null) {
+        viewModelScope.launch {
+            homeRepository.enrollInActivity(userId, activityId)
+                .onSuccess {
+                    if (context != null && !title.isNullOrBlank() && !location.isNullOrBlank()) {
+                        NotificationHelper.sendEnrollmentNotification(context, title, location)
+                    }
+                    loadMissions()
+                }
+                .onFailure { loadMissions() }
+        }
+    }
+
+    fun cancelEnrollment(activityId: Int) {
+        viewModelScope.launch {
+            homeRepository.cancelEnrollment(userId, activityId)
+                .onSuccess { loadMissions() }
+                .onFailure { loadMissions() }
+        }
+    }
 }
 
 class MissionsViewModelFactory(
     private val missionsRepository: MissionsRepository,
+    private val homeRepository: HomeRepository,
     private val userId: Int,
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T =
-        MissionsViewModel(missionsRepository, userId) as T
+        MissionsViewModel(missionsRepository, homeRepository, userId) as T
 }

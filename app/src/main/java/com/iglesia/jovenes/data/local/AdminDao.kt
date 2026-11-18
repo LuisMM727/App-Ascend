@@ -100,6 +100,12 @@ abstract class AdminDao {
     abstract suspend fun insertActivity(activity: ActivityEntity): Long
 
     /**
+     * Vincula automáticamente una nueva actividad con las misiones activas en el sistema.
+     */
+    @Query("INSERT OR IGNORE INTO MISION_ACTIVIDADES (FK_Mision, FK_Actividades) SELECT m.ID_Misiones, :activityId FROM MISIONES m WHERE m.Estado = 'ACTIVA'")
+    abstract suspend fun linkActivityToActiveMissions(activityId: Int)
+
+    /**
      * Cambia el estado de una actividad (ACTIVA / INACTIVA).
      */
     @Query("UPDATE ACTIVIDADES SET Estado = :status WHERE ID_Actividades = :activityId")
