@@ -31,7 +31,6 @@ import androidx.compose.material.icons.outlined.Dashboard
 import androidx.compose.material.icons.outlined.Event
 import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.OutlinedFlag
-import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Phone
 import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material.icons.outlined.Search
@@ -459,7 +458,7 @@ private fun UsersTabContent(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             contentPadding = PaddingValues(bottom = 20.dp),
         ) {
-            items(filteredUsers, key = { it.id }) { user ->
+            items(filteredUsers.distinctBy { it.id }, key = { it.id }) { user ->
                 UserAdminCard(user = user, onToggleStatus = { onToggleUserStatus(user.id, user.status) })
             }
         }
@@ -562,7 +561,7 @@ private fun MissionsTabContent(
         verticalArrangement = Arrangement.spacedBy(12.dp),
         contentPadding = PaddingValues(bottom = 80.dp),
     ) {
-        items(missions, key = { it.id }) { mission ->
+        items(missions.distinctBy { it.id }, key = { it.id }) { mission ->
             Card(
                 colors = CardDefaults.cardColors(containerColor = CardSurface),
                 shape = RoundedCornerShape(20.dp),
@@ -597,7 +596,7 @@ private fun ActivitiesTabContent(
         verticalArrangement = Arrangement.spacedBy(12.dp),
         contentPadding = PaddingValues(bottom = 80.dp),
     ) {
-        items(activities, key = { it.id }) { activity ->
+        items(activities.distinctBy { it.id }, key = { it.id }) { activity ->
             Card(
                 colors = CardDefaults.cardColors(containerColor = CardSurface),
                 shape = RoundedCornerShape(20.dp),
@@ -662,7 +661,7 @@ private fun EnrolledUsersDialog(
                     modifier = Modifier.fillMaxWidth().height(260.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
-                    items(enrolledUsers, key = { it.userId }) { user ->
+                    items(enrolledUsers.distinctBy { it.userId }, key = { it.userId }) { user ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -724,7 +723,7 @@ private fun SettingsTabContent(
         item {
             Text("Requerimientos de Niveles", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
         }
-        items(levels, key = { it.id }) { level ->
+        items(levels.distinctBy { it.id }, key = { it.id }) { level ->
             var pointsText by remember(level.requiredPoints) { mutableStateOf(level.requiredPoints.toString()) }
             Card(
                 colors = CardDefaults.cardColors(containerColor = CardSurface),

@@ -203,7 +203,7 @@ private fun HomeContent(
 
         if (data.missions.isNotEmpty()) {
             item { SectionTitle("Misiones Activas", "Haz clic para desplegar los detalles de la misión") }
-            items(data.missions, key = { it.missionId }) { mission ->
+            items(data.missions.distinctBy { it.missionId }, key = { it.missionId }) { mission ->
                 MissionCard(mission)
             }
         } else data.featuredMission?.let { mission ->
@@ -212,7 +212,7 @@ private fun HomeContent(
         }
 
         item { SectionTitle("Próximas actividades", "Conecta, participa y gana XP") }
-        items(data.activities, key = { it.activityId }) { activity ->
+        items(data.activities.distinctBy { it.activityId }, key = { it.activityId }) { activity ->
             ActivityCard(
                 activity = activity,
                 onEnroll = { ctx, title, loc -> onEnroll(activity.activityId, ctx, title, loc) },

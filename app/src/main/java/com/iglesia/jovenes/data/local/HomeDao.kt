@@ -72,19 +72,23 @@ abstract class HomeDao {
     abstract suspend fun activeMissions(userId: Int): List<FeaturedMission>
 
     /**
-     * Obtiene las próximas 10 actividades comunitarias activas y verifica si el usuario está inscrito.
+     * Obtiene las próximas 10 actividades comunitarias activas agrupadas por ID único para evitar duplicados.
      */
     @Query(
         """
-        SELECT a.ID_Actividades AS activityId, a.Titulo AS title,
-               a.Lugar AS location, a.Fecha AS date,
-               a.Cupo_actual AS currentCapacity, a.Cupo_maximo AS maximumCapacity,
-               (a.Puntos_base + a.Puntos_bonificacion) AS totalPoints,
-               i.Estado_asistencia AS enrollmentStatus
+        SELECT a.ID_Actividades AS activityId,
+               COALESCE(a.Titulo, 'Actividad') AS title,
+               COALESCE(a.Lugar, 'Iglesia') AS location,
+               COALESCE(a.Fecha, 0) AS date,
+               COALESCE(a.Cupo_actual, 0) AS currentCapacity,
+               COALESCE(a.Cupo_maximo, 30) AS maximumCapacity,
+               (COALESCE(a.Puntos_base, 0) + COALESCE(a.Puntos_bonificacion, 0)) AS totalPoints,
+               MAX(i.Estado_asistencia) AS enrollmentStatus
         FROM ACTIVIDADES a
         LEFT JOIN INSCRIPCIONES i ON i.FK_Actividades = a.ID_Actividades
              AND i.FK_Usuarios = :userId
         WHERE a.Estado = 'ACTIVA'
+        GROUP BY a.ID_Actividades
         ORDER BY a.Fecha ASC LIMIT 10
         """
     )
@@ -113,6 +117,12 @@ abstract class HomeDao {
     abstract suspend fun leaderboard(): List<LeaderboardEntry>
 
     /**
+     * Verifica si el usuario ya está inscrito en la actividad.
+     */
+    @Query("SELECT COUNT(*) > 0 FROM INSCRIPCIONES WHERE FK_Usuarios = :userId AND FK_Actividades = :activityId")
+    abstract suspend fun isUserEnrolled(userId: Int, activityId: Int): Boolean
+
+    /**
      * Inserta la inscripción del usuario a una actividad.
      */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -137,10 +147,11 @@ abstract class HomeDao {
     abstract suspend fun decrementActivityCapacity(activityId: Int)
 
     /**
-     * Proceso transaccional de inscripción a una actividad.
+     * Proceso transaccional seguro de inscripción a una actividad.
      */
     @Transaction
     open suspend fun enrollUserInActivity(userId: Int, activityId: Int) {
+        val enrolled = isUserEnrolled(userId, activityId)
         val enrollment = EnrollmentEntity(
             id = 0,
             userId = userId,
@@ -150,16 +161,21 @@ abstract class HomeDao {
             earnedPoints = 0,
         )
         insertEnrollment(enrollment)
-        incrementActivityCapacity(activityId)
+        if (!enrolled) {
+            incrementActivityCapacity(activityId)
+        }
     }
 
     /**
-     * Proceso transaccional para cancelar la inscripción a una actividad.
+     * Proceso transaccional seguro para cancelar la inscripción a una actividad.
      */
     @Transaction
     open suspend fun cancelUserEnrollment(userId: Int, activityId: Int) {
-        deleteEnrollment(userId, activityId)
-        decrementActivityCapacity(activityId)
+        val enrolled = isUserEnrolled(userId, activityId)
+        if (enrolled) {
+            deleteEnrollment(userId, activityId)
+            decrementActivityCapacity(activityId)
+        }
     }
 
     /**

@@ -227,7 +227,7 @@ private fun MissionsContent(
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                items(filteredMissions, key = { it.missionId }) { mission ->
+                items(filteredMissions.distinctBy { it.missionId }, key = { it.missionId }) { mission ->
                     ExpandableMissionCard(
                         mission = mission,
                         onEnroll = onEnroll,

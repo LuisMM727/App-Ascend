@@ -61,7 +61,7 @@ interface MissionsDao {
     suspend fun getAllMissionsWithProgress(userId: Int): List<MissionWithProgressRaw>
 
     /**
-     * Obtiene la lista de actividades comunitarias vinculadas a una misión dada, junto al estado de inscripción del usuario.
+     * Obtiene la lista de actividades comunitarias vinculadas a una misión dada, agrupadas por ID único.
      */
     @Query(
         """
@@ -71,11 +71,12 @@ interface MissionsDao {
                COALESCE(a.Fecha, 0) AS date,
                COALESCE(a.Lugar, 'Iglesia') AS location,
                (COALESCE(a.Puntos_base, 0) + COALESCE(a.Puntos_bonificacion, 0)) AS totalPoints,
-               i.Estado_asistencia AS enrollmentStatus
+               MAX(i.Estado_asistencia) AS enrollmentStatus
         FROM MISION_ACTIVIDADES ma
         JOIN ACTIVIDADES a ON a.ID_Actividades = ma.FK_Actividades
         LEFT JOIN INSCRIPCIONES i ON i.FK_Actividades = a.ID_Actividades AND i.FK_Usuarios = :userId
         WHERE ma.FK_Mision = :missionId AND a.Estado = 'ACTIVA'
+        GROUP BY a.ID_Actividades
         ORDER BY a.Fecha ASC
         """
     )
