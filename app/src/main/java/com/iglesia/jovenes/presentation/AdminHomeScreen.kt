@@ -715,19 +715,54 @@ private fun SettingsTabContent(
     levels: List<AdminLevelItem>,
     onUpdateLevelPoints: (Int, Int) -> Unit,
 ) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-        contentPadding = PaddingValues(bottom = 20.dp),
+    var churchName by remember { mutableStateOf("Iglesia Central Ascend") }
+    var contactPhone by remember { mutableStateOf("+595 981 123 456") }
+    var notificationsEnabled by remember { mutableStateOf(true) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp, vertical = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        item {
-            Text("Requerimientos de Niveles", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
+        // Sección 1: Información de la Comunidad
+        Text("Información de la Comunidad", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
+
+        Card(
+            colors = CardDefaults.cardColors(containerColor = CardSurface),
+            shape = RoundedCornerShape(20.dp),
+            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.06f)),
+        ) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = churchName,
+                    onValueChange = { churchName = it },
+                    label = { Text("Nombre de la Iglesia / Comunidad") },
+                    leadingIcon = { Icon(Icons.Outlined.Church, contentDescription = null, tint = NeonCyan) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                )
+                OutlinedTextField(
+                    value = contactPhone,
+                    onValueChange = { contactPhone = it },
+                    label = { Text("Teléfono de Contacto") },
+                    leadingIcon = { Icon(Icons.Outlined.Phone, contentDescription = null, tint = NeonCyan) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                )
+            }
         }
-        items(levels.distinctBy { it.id }, key = { it.id }) { level ->
+
+        // Sección 2: Configuración de Niveles y Puntos XP
+        Text("Requerimientos de Niveles (XP)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
+
+        levels.distinctBy { it.id }.forEach { level ->
             var pointsText by remember(level.requiredPoints) { mutableStateOf(level.requiredPoints.toString()) }
             Card(
                 colors = CardDefaults.cardColors(containerColor = CardSurface),
                 shape = RoundedCornerShape(20.dp),
+                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.06f)),
             ) {
                 Row(
                     modifier = Modifier.padding(16.dp),
@@ -759,6 +794,58 @@ private fun SettingsTabContent(
                 }
             }
         }
+
+        // Sección 3: Preferencias del Sistema y Notificaciones
+        Text("Preferencias del Sistema", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.White)
+
+        Card(
+            colors = CardDefaults.cardColors(containerColor = CardSurface),
+            shape = RoundedCornerShape(20.dp),
+            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.06f)),
+        ) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Notificaciones Locales de Eventos", fontWeight = FontWeight.Bold, color = Color.White)
+                        Text("Enviar avisos automáticos al inscribirse y ganar XP", style = MaterialTheme.typography.bodySmall, color = MutedText)
+                    }
+                    androidx.compose.material3.Switch(
+                        checked = notificationsEnabled,
+                        onCheckedChange = { notificationsEnabled = it },
+                        colors = androidx.compose.material3.SwitchDefaults.colors(
+                            checkedThumbColor = AppBackground,
+                            checkedTrackColor = NeonCyan,
+                        ),
+                    )
+                }
+            }
+        }
+
+        // Sección 4: Información de la Versión
+        Card(
+            colors = CardDefaults.cardColors(containerColor = CardSurface),
+            shape = RoundedCornerShape(20.dp),
+            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.06f)),
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Ascend Mobile v1.0.0 Pro", fontWeight = FontWeight.Bold, color = Color.White)
+                    Text("Base de Datos SQLite Room: Conectada ✓", style = MaterialTheme.typography.bodySmall, color = Color(0xFF6BFFB8))
+                }
+                Box(
+                    modifier = Modifier
+                        .background(NeonCyan.copy(alpha = 0.15f), CircleShape)
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                ) {
+                    Text("ACTIVO", fontWeight = FontWeight.Bold, fontSize = 11.sp, color = NeonCyan)
+                }
+            }
+        }
+
+        Spacer(Modifier.height(40.dp))
     }
 }
 
