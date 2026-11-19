@@ -209,4 +209,21 @@ class AdminRepositoryImpl(
         if (points <= 0) error("Los puntos requeridos deben ser mayores a 0.")
         adminDao.updateLevelPoints(levelId, points)
     }
+
+    override suspend fun getLinkedMissionIdsForActivity(activityId: Int): Result<List<Int>> = runCatching {
+        adminDao.getLinkedMissionIdsForActivity(activityId)
+    }
+
+    override suspend fun linkActivityToMission(missionId: Int, activityId: Int): Result<Unit> = runCatching {
+        val link = com.iglesia.jovenes.data.local.MissionActivityEntity(
+            id = (missionId * 10000 + activityId),
+            missionId = missionId,
+            activityId = activityId,
+        )
+        adminDao.insertMissionActivityLink(link)
+    }
+
+    override suspend fun unlinkActivityFromMission(missionId: Int, activityId: Int): Result<Unit> = runCatching {
+        adminDao.deleteMissionActivityLink(missionId, activityId)
+    }
 }

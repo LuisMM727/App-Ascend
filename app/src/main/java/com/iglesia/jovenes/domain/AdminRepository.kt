@@ -1,5 +1,8 @@
 package com.iglesia.jovenes.domain
 
+/**
+ * Contrato del repositorio para las funciones del panel de Administración.
+ */
 interface AdminRepository {
     suspend fun getStats(): Result<AdminStats>
     suspend fun getUsers(): Result<List<AdminUserItem>>
@@ -14,4 +17,7 @@ interface AdminRepository {
     suspend fun markAttendance(userId: Int, activityId: Int, points: Int): Result<Unit>
     suspend fun getLevels(): Result<List<AdminLevelItem>>
     suspend fun updateLevelPoints(levelId: Int, points: Int): Result<Unit>
+    suspend fun getLinkedMissionIdsForActivity(activityId: Int): Result<List<Int>>
+    suspend fun linkActivityToMission(missionId: Int, activityId: Int): Result<Unit>
+    suspend fun unlinkActivityFromMission(missionId: Int, activityId: Int): Result<Unit>
 }

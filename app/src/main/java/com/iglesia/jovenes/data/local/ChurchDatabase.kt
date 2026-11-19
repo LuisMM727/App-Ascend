@@ -23,7 +23,7 @@ import kotlinx.coroutines.CoroutineScope
         BadgeEntity::class,
         MissionActivityEntity::class,
     ],
-    version = 9,
+    version = 10,
     exportSchema = false,
 )
 abstract class ChurchDatabase : RoomDatabase() {
@@ -77,10 +77,10 @@ abstract class ChurchDatabase : RoomDatabase() {
                 db.execSQL("INSERT OR IGNORE INTO ROLES (ID_Rol, Nombre) VALUES (1, 'ADMIN')")
                 db.execSQL("INSERT OR IGNORE INTO ROLES (ID_Rol, Nombre) VALUES (2, 'JUVENIL')")
 
-                // 2. Insertar Niveles Iniciales de Crecimiento
-                db.execSQL("INSERT OR IGNORE INTO NIVELES (ID_Niveles, Nombre, Descripcion, Puntos_requeridos, Orden) VALUES (1, 'Líder Juvenil', 'Nivel inicial de crecimiento', 100, 1)")
+                // 2. Insertar Niveles Iniciales de Crecimiento (Nivel 1 a 0 XP, Nivel 2 a 500 XP, Nivel 3 a 1000 XP)
+                db.execSQL("INSERT OR IGNORE INTO NIVELES (ID_Niveles, Nombre, Descripcion, Puntos_requeridos, Orden) VALUES (1, 'Líder Juvenil', 'Nivel inicial de crecimiento', 0, 1)")
                 db.execSQL("INSERT OR IGNORE INTO NIVELES (ID_Niveles, Nombre, Descripcion, Puntos_requeridos, Orden) VALUES (2, 'Servidor Comprometido', 'Nivel intermedio', 500, 2)")
-                db.execSQL("INSERT OR IGNORE INTO NIVELES (ID_Niveles, Nombre, Descripcion, Puntos_requeridos, Orden) VALUES (3, 'Embajador de Fe', 'Nivel avanzado', 1500, 3)")
+                db.execSQL("INSERT OR IGNORE INTO NIVELES (ID_Niveles, Nombre, Descripcion, Puntos_requeridos, Orden) VALUES (3, 'Embajador de Fe', 'Nivel avanzado', 1000, 3)")
 
                 val now = System.currentTimeMillis()
 
@@ -93,7 +93,7 @@ abstract class ChurchDatabase : RoomDatabase() {
                 db.execSQL("INSERT OR IGNORE INTO USUARIOS (ID_Usuarios, Nombre, Apellido, Correo, Password, Estado, Intentos_fallidos, Bloqueado_hasta, Fecha_registro, FK_Rol, Iglesia, Edad, Telefono, PerfilCompletado) VALUES (3, 'Sofía', 'Benítez', 'sofia@email.com', '123456', 'ACTIVO', 0, NULL, $now, 2, 'Parroquia San José', 20, '0981444555', 1)")
 
                 // 5. Insertar Registro de Puntos de Experiencia (XP)
-                db.execSQL("INSERT OR IGNORE INTO USUARIO_PUNTOS (ID_Usuarios_puntos, FK_Usuarios, Puntos_acumulados, FK_Nivel, Ultima_actualizacion) VALUES (1, 1, 1200, 2, $now)")
+                db.execSQL("INSERT OR IGNORE INTO USUARIO_PUNTOS (ID_Usuarios_puntos, FK_Usuarios, Puntos_acumulados, FK_Nivel, Ultima_actualizacion) VALUES (1, 1, 1200, 3, $now)")
                 db.execSQL("INSERT OR IGNORE INTO USUARIO_PUNTOS (ID_Usuarios_puntos, FK_Usuarios, Puntos_acumulados, FK_Nivel, Ultima_actualizacion) VALUES (2, 2, 1500, 3, $now)")
                 db.execSQL("INSERT OR IGNORE INTO USUARIO_PUNTOS (ID_Usuarios_puntos, FK_Usuarios, Puntos_acumulados, FK_Nivel, Ultima_actualizacion) VALUES (3, 3, 800, 2, $now)")
 
@@ -111,7 +111,7 @@ abstract class ChurchDatabase : RoomDatabase() {
                 // 9. Insertar Insignias Semilla
                 db.execSQL("INSERT OR IGNORE INTO INSIGNIAS (ID_Insignias, Nombre, Descripcion, Imagen_url, Condicion_tipo, Condicion_valor) VALUES (1, 'Primer Paso', 'Completar el registro inicial e ingresar a la comunidad Ascend', NULL, 'PUNTOS', 100)")
                 db.execSQL("INSERT OR IGNORE INTO INSIGNIAS (ID_Insignias, Nombre, Descripcion, Imagen_url, Condicion_tipo, Condicion_valor) VALUES (2, 'Servidor Fiel', 'Avanzar al nivel intermedio de servicio comunitario', NULL, 'PUNTOS', 500)")
-                db.execSQL("INSERT OR IGNORE INTO INSIGNIAS (ID_Insignias, Nombre, Descripcion, Imagen_url, Condicion_tipo, Condicion_valor) VALUES (3, 'Embajador de Fe', 'Demostrar liderazgo constante y acumular +1200 XP', NULL, 'PUNTOS', 1200)")
+                db.execSQL("INSERT OR IGNORE INTO INSIGNIAS (ID_Insignias, Nombre, Descripcion, Imagen_url, Condicion_tipo, Condicion_valor) VALUES (3, 'Embajador de Fe', 'Demostrar liderazgo constante y acumular +1000 XP', NULL, 'PUNTOS', 1000)")
                 db.execSQL("INSERT OR IGNORE INTO INSIGNIAS (ID_Insignias, Nombre, Descripcion, Imagen_url, Condicion_tipo, Condicion_valor) VALUES (4, 'Líder Inspirador', 'Alcanzar el rango máximo con más de 2000 XP acumulados', NULL, 'PUNTOS', 2000)")
 
             } catch (t: Throwable) {

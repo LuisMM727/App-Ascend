@@ -106,6 +106,24 @@ abstract class AdminDao {
     abstract suspend fun linkActivityToActiveMissions(activityId: Int)
 
     /**
+     * Obtiene los IDs de las misiones actualmente vinculadas a una actividad.
+     */
+    @Query("SELECT FK_Mision FROM MISION_ACTIVIDADES WHERE FK_Actividades = :activityId")
+    abstract suspend fun getLinkedMissionIdsForActivity(activityId: Int): List<Int>
+
+    /**
+     * Vincula una actividad a una misión específica.
+     */
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    abstract suspend fun insertMissionActivityLink(link: MissionActivityEntity)
+
+    /**
+     * Desvincula una actividad de una misión específica.
+     */
+    @Query("DELETE FROM MISION_ACTIVIDADES WHERE FK_Mision = :missionId AND FK_Actividades = :activityId")
+    abstract suspend fun deleteMissionActivityLink(missionId: Int, activityId: Int)
+
+    /**
      * Cambia el estado de una actividad (ACTIVA / INACTIVA).
      */
     @Query("UPDATE ACTIVIDADES SET Estado = :status WHERE ID_Actividades = :activityId")

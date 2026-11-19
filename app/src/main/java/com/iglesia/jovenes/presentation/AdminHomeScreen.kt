@@ -64,7 +64,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -99,6 +98,8 @@ fun AdminHomeScreen(
     val showCreateMission by viewModel.showCreateMissionDialog.collectAsStateWithLifecycle()
     val showCreateActivity by viewModel.showCreateActivityDialog.collectAsStateWithLifecycle()
     val showEnrolledUsers by viewModel.showEnrolledUsersDialog.collectAsStateWithLifecycle()
+    val showManageMissions by viewModel.showManageMissionsDialog.collectAsStateWithLifecycle()
+    val linkedMissionIds by viewModel.linkedMissionIds.collectAsStateWithLifecycle()
     val selectedActivity by viewModel.selectedActivity.collectAsStateWithLifecycle()
     val enrolledUsers by viewModel.enrolledUsers.collectAsStateWithLifecycle()
 
@@ -135,7 +136,6 @@ fun AdminHomeScreen(
                 .fillMaxSize()
                 .padding(padding),
         ) {
-            // Tab Bar Superior
             AdminTabsRow(
                 selectedTab = selectedTab,
                 onTabSelected = { viewModel.selectTab(it) },
@@ -171,6 +171,7 @@ fun AdminHomeScreen(
                         activities = activities,
                         onToggleActivityStatus = { id, status -> viewModel.toggleActivityStatus(id, status) },
                         onViewEnrolledUsers = { viewModel.openEnrolledUsersDialog(it) },
+                        onManageMissions = { viewModel.openManageMissionsDialog(it) },
                     )
 
                     AdminTab.SETTINGS -> SettingsTabContent(
@@ -182,7 +183,6 @@ fun AdminHomeScreen(
         }
     }
 
-    // Diálogos de Creación y Ver Inscritos
     if (showCreateMission) {
         CreateMissionDialog(
             onDismiss = { viewModel.setShowCreateMissionDialog(false) },
@@ -213,6 +213,18 @@ fun AdminHomeScreen(
                     context = context,
                     activityTitle = selectedActivity!!.title,
                 )
+            },
+        )
+    }
+
+    if (showManageMissions && selectedActivity != null) {
+        ManageMissionsForActivityDialog(
+            activity = selectedActivity!!,
+            allMissions = missions,
+            linkedMissionIds = linkedMissionIds,
+            onDismiss = { viewModel.closeManageMissionsDialog() },
+            onToggleLink = { missionId, isLinked ->
+                viewModel.toggleMissionLink(missionId, isLinked)
             },
         )
     }
@@ -590,6 +602,7 @@ private fun ActivitiesTabContent(
     activities: List<AdminActivityItem>,
     onToggleActivityStatus: (Int, String) -> Unit,
     onViewEnrolledUsers: (AdminActivityItem) -> Unit,
+    onManageMissions: (AdminActivityItem) -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 12.dp),
@@ -621,6 +634,17 @@ private fun ActivitiesTabContent(
                         ) {
                             Text("Inscritos (${activity.currentCapacity})", fontSize = 12.sp, color = NeonCyan)
                         }
+
+                        Spacer(Modifier.width(8.dp))
+
+                        OutlinedButton(
+                            onClick = { onManageMissions(activity) },
+                            shape = RoundedCornerShape(10.dp),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
+                        ) {
+                            Text("Misiones", fontSize = 12.sp, color = ElectricPurple)
+                        }
+
                         Spacer(Modifier.weight(1f))
                         TextButton(onClick = { onToggleActivityStatus(activity.id, activity.status) }) {
                             Text(if (activity.isActive) "Desactivar" else "Activar", color = if (activity.isActive) Color(0xFFFF6B6B) else NeonCyan)
@@ -630,6 +654,72 @@ private fun ActivitiesTabContent(
             }
         }
     }
+}
+
+@Composable
+private fun ManageMissionsForActivityDialog(
+    activity: AdminActivityItem,
+    allMissions: List<AdminMissionItem>,
+    linkedMissionIds: List<Int>,
+    onDismiss: () -> Unit,
+    onToggleLink: (missionId: Int, isLinked: Boolean) -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = CardSurface,
+        title = {
+            Column {
+                Text("Vincular / Quitar Misiones", color = Color.White, fontWeight = FontWeight.Bold)
+                Text(activity.title, color = MutedText, style = MaterialTheme.typography.bodySmall)
+            }
+        },
+        text = {
+            if (allMissions.isEmpty()) {
+                Text("No hay misiones registradas.", color = MutedText)
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth().height(260.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    items(allMissions.distinctBy { it.id }, key = { it.id }) { mission ->
+                        val isLinked = linkedMissionIds.contains(mission.id)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(AppBackground, RoundedCornerShape(12.dp))
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(mission.name, fontWeight = FontWeight.Bold, color = Color.White, fontSize = 13.sp)
+                                Text("+${mission.bonusPoints} XP Bonus", color = NeonCyan, fontSize = 11.sp)
+                            }
+
+                            Button(
+                                onClick = { onToggleLink(mission.id, isLinked) },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (isLinked) Color(0xFF3D1C22) else ElectricPurple,
+                                    contentColor = if (isLinked) Color(0xFFFF7A85) else Color.White,
+                                ),
+                                shape = RoundedCornerShape(10.dp),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                            ) {
+                                Text(if (isLinked) "Quitar" else "Vincular", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onDismiss,
+                colors = ButtonDefaults.buttonColors(containerColor = ElectricPurple),
+            ) {
+                Text("Listo")
+            }
+        },
+    )
 }
 
 @Composable

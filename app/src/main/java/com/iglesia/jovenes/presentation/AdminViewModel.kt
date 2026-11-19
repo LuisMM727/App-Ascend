@@ -68,6 +68,12 @@ class AdminViewModel(
     private val _showEnrolledUsersDialog = MutableStateFlow(false)
     val showEnrolledUsersDialog: StateFlow<Boolean> = _showEnrolledUsersDialog.asStateFlow()
 
+    private val _showManageMissionsDialog = MutableStateFlow(false)
+    val showManageMissionsDialog: StateFlow<Boolean> = _showManageMissionsDialog.asStateFlow()
+
+    private val _linkedMissionIds = MutableStateFlow<List<Int>>(emptyList())
+    val linkedMissionIds: StateFlow<List<Int>> = _linkedMissionIds.asStateFlow()
+
     init {
         loadData()
     }
@@ -100,6 +106,35 @@ class AdminViewModel(
         _selectedActivity.value = activity
         _showEnrolledUsersDialog.value = true
         loadEnrolledUsers(activity.id)
+    }
+
+    fun openManageMissionsDialog(activity: AdminActivityItem) {
+        _selectedActivity.value = activity
+        _showManageMissionsDialog.value = true
+        viewModelScope.launch {
+            adminRepository.getLinkedMissionIdsForActivity(activity.id)
+                .onSuccess { _linkedMissionIds.value = it }
+                .onFailure { _errorMessage.value = it.message }
+        }
+    }
+
+    fun closeManageMissionsDialog() {
+        _showManageMissionsDialog.value = false
+        _selectedActivity.value = null
+        _linkedMissionIds.value = emptyList()
+    }
+
+    fun toggleMissionLink(missionId: Int, isCurrentlyLinked: Boolean) {
+        val activity = selectedActivity.value ?: return
+        viewModelScope.launch {
+            if (isCurrentlyLinked) {
+                adminRepository.unlinkActivityFromMission(missionId, activity.id)
+            } else {
+                adminRepository.linkActivityToMission(missionId, activity.id)
+            }
+            adminRepository.getLinkedMissionIdsForActivity(activity.id)
+                .onSuccess { _linkedMissionIds.value = it }
+        }
     }
 
     private fun loadEnrolledUsers(activityId: Int) {

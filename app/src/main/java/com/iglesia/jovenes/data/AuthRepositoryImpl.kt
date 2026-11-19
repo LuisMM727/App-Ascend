@@ -129,11 +129,11 @@ class AuthRepositoryImpl(
 
         val insertedId = authDao.insertUser(newUserEntity).toInt()
 
-        // Asignar puntos y nivel inicial (100 XP)
+        // Asignar puntos y nivel inicial (0 XP)
         val pointsEntity = UserPointsEntity(
             id = insertedId,
             userId = insertedId,
-            accumulatedPoints = 100,
+            accumulatedPoints = 0,
             levelId = 1,
             updatedAt = System.currentTimeMillis(),
         )
