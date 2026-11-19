@@ -557,9 +557,8 @@ private fun TaskItemCard(
 
 private fun formatDateOnly(epochMillis: Long): String =
     if (epochMillis <= 0) "" else try {
-        DateTimeFormatter.ofPattern("dd MMM yyyy")
-            .withZone(ZoneId.systemDefault())
-            .format(Instant.ofEpochMilli(epochMillis))
-    } catch (e: Exception) {
+        val sdf = java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale("es", "ES"))
+        sdf.format(java.util.Date(epochMillis))
+    } catch (t: Throwable) {
         ""
     }

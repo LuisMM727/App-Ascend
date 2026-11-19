@@ -216,6 +216,10 @@ class AdminViewModelFactory(
     private val adminUserId: Int,
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
-    override fun <T : ViewModel> create(modelClass: Class<T>): T =
-        AdminViewModel(adminRepository, adminUserId) as T
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(AdminViewModel::class.java)) {
+            return AdminViewModel(adminRepository, adminUserId) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
+    }
 }

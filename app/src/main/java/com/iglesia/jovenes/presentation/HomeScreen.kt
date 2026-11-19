@@ -598,7 +598,7 @@ private fun HomeBottomBar(
     onSelected: (HomeDestination) -> Unit,
 ) {
     NavigationBar(containerColor = AppBackground) {
-        HomeDestination.entries.forEach { destination ->
+        HomeDestination.values().forEach { destination ->
             NavigationBarItem(
                 selected = destination == selectedDestination,
                 onClick = { onSelected(destination) },
@@ -620,11 +620,17 @@ private fun String.initials(): String =
     trim().split(" ").take(2).mapNotNull { it.firstOrNull()?.toString() }.joinToString("")
 
 private fun formatDate(epochMillis: Long): String =
-    DateTimeFormatter.ofPattern("dd MMM · HH:mm")
-        .withZone(ZoneId.systemDefault())
-        .format(Instant.ofEpochMilli(epochMillis))
+    if (epochMillis <= 0) "" else try {
+        val sdf = java.text.SimpleDateFormat("dd MMM · HH:mm", java.util.Locale("es", "ES"))
+        sdf.format(java.util.Date(epochMillis))
+    } catch (t: Throwable) {
+        ""
+    }
 
 private fun formatDateDateOnly(epochMillis: Long): String =
-    DateTimeFormatter.ofPattern("dd MMM yyyy")
-        .withZone(ZoneId.systemDefault())
-        .format(Instant.ofEpochMilli(epochMillis))
+    if (epochMillis <= 0) "" else try {
+        val sdf = java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale("es", "ES"))
+        sdf.format(java.util.Date(epochMillis))
+    } catch (t: Throwable) {
+        ""
+    }

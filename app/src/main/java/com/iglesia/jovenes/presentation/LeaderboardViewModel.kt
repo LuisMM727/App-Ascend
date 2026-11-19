@@ -43,6 +43,10 @@ class LeaderboardViewModelFactory(
     private val userId: Int,
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
-    override fun <T : ViewModel> create(modelClass: Class<T>): T =
-        LeaderboardViewModel(leaderboardRepository, userId) as T
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(LeaderboardViewModel::class.java)) {
+            return LeaderboardViewModel(leaderboardRepository, userId) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
+    }
 }
