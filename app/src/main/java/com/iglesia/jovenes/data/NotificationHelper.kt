@@ -12,12 +12,20 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.iglesia.jovenes.R
 
+/**
+ * Objeto utilitario encargado de crear canales de notificación de Android y enviar avisos locales
+ * para la confirmación de inscripciones a eventos y acreditación de puntos de experiencia (XP).
+ */
 object NotificationHelper {
 
+    /** Identificador único del canal de notificaciones */
     const val CHANNEL_ID = "ascend_events_channel"
     private const val CHANNEL_NAME = "Eventos y Misiones Ascend"
     private const val CHANNEL_DESC = "Avisos de inscripciones a eventos y acreditación de puntos XP"
 
+    /**
+     * Crea el canal de notificaciones en Android 8.0 (API 26) o superior.
+     */
     fun createNotificationChannel(context: Context) {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -30,10 +38,13 @@ object NotificationHelper {
                 notificationManager.createNotificationChannel(channel)
             }
         } catch (t: Throwable) {
-            // Safe guard
+            // Protección contra excepciones en la creación del canal
         }
     }
 
+    /**
+     * Dispara una notificación nativa cuando el joven se inscribe exitosamente a una actividad.
+     */
     @SuppressLint("MissingPermission")
     fun sendEnrollmentNotification(context: Context, activityTitle: String, location: String) {
         try {
@@ -56,10 +67,13 @@ object NotificationHelper {
 
             NotificationManagerCompat.from(context).notify((System.currentTimeMillis() % 10000).toInt(), builder.build())
         } catch (t: Throwable) {
-            // Safe guard against any runtime permission or notification crash
+            // Protección defensiva contra errores de permisos en tiempo de ejecución
         }
     }
 
+    /**
+     * Dispara una notificación nativa cuando el Administrador valida la asistencia del joven y le otorga puntos XP.
+     */
     @SuppressLint("MissingPermission")
     fun sendXpGainedNotification(context: Context, points: Int, activityTitle: String) {
         try {
@@ -82,7 +96,7 @@ object NotificationHelper {
 
             NotificationManagerCompat.from(context).notify((System.currentTimeMillis() % 10000).toInt(), builder.build())
         } catch (t: Throwable) {
-            // Safe guard against any runtime permission or notification crash
+            // Protección defensiva contra errores de permisos en tiempo de ejecución
         }
     }
 }

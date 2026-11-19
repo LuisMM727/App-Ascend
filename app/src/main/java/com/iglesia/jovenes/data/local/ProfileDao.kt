@@ -3,6 +3,9 @@ package com.iglesia.jovenes.data.local
 import androidx.room.Dao
 import androidx.room.Query
 
+/**
+ * Mapeo de datos crudos del perfil del usuario, incluyendo nivel dinámico y meta de XP.
+ */
 data class UserProfileRaw(
     val userId: Int,
     val name: String,
@@ -18,6 +21,9 @@ data class UserProfileRaw(
     val requiredPoints: Int,
 )
 
+/**
+ * Mapeo de datos de una Insignia/Logro con su estado de desbloqueo según la experiencia acumulada.
+ */
 data class BadgeRaw(
     val badgeId: Int,
     val name: String,
@@ -28,8 +34,15 @@ data class BadgeRaw(
     val isUnlocked: Boolean,
 )
 
+/**
+ * DAO para la gestión del Perfil del usuario, historial de actividades e insignias desbloqueadas.
+ */
 @Dao
 interface ProfileDao {
+
+    /**
+     * Consulta detallada del perfil del usuario calculando su nivel actual y el objetivo del siguiente nivel.
+     */
     @Query(
         """
         SELECT u.ID_Usuarios AS userId,
@@ -65,6 +78,9 @@ interface ProfileDao {
     )
     suspend fun getUserProfileDetails(userId: Int): UserProfileRaw?
 
+    /**
+     * Conteo total de actividades completadas con asistencia confirmada.
+     */
     @Query(
         """
         SELECT COUNT(*)
@@ -74,6 +90,9 @@ interface ProfileDao {
     )
     suspend fun getCompletedActivitiesCount(userId: Int): Int
 
+    /**
+     * Obtiene todas las insignias registradas indicando si el usuario ha alcanzado la meta de XP requerida.
+     */
     @Query(
         """
         SELECT b.ID_Insignias AS badgeId,
@@ -89,6 +108,9 @@ interface ProfileDao {
     )
     suspend fun getAllBadgesWithStatus(userPoints: Int): List<BadgeRaw>
 
+    /**
+     * Actualiza la información personal del usuario desde la pantalla de edición de perfil.
+     */
     @Query("UPDATE USUARIOS SET Iglesia = :church, Edad = :age, Telefono = :phone WHERE ID_Usuarios = :userId")
     suspend fun updateUserPersonalDetails(userId: Int, church: String, age: Int, phone: String?)
 }

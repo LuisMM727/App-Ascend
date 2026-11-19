@@ -13,14 +13,20 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+/** Criterios de filtrado para las misiones (Todas, Activas, Completadas) */
 enum class MissionsFilter { ALL, ACTIVE, COMPLETED }
 
+/** Estados UI de la pantalla de misiones */
 sealed interface MissionsUiState {
     data object Loading : MissionsUiState
     data class Success(val data: MissionsScreenData) : MissionsUiState
     data class Error(val message: String) : MissionsUiState
 }
 
+/**
+ * ViewModel para la pantalla de misiones.
+ * Permite filtrar misiones, desplegar tareas asociadas e inscribirse a eventos directamente desde cada tarjeta.
+ */
 class MissionsViewModel(
     private val missionsRepository: MissionsRepository,
     private val homeRepository: HomeRepository,
@@ -31,16 +37,19 @@ class MissionsViewModel(
     val uiState: StateFlow<MissionsUiState> = _uiState.asStateFlow()
 
     private val _selectedFilter = MutableStateFlow(MissionsFilter.ALL)
+    /** Filtro de misiones seleccionado en la barra superior */
     val selectedFilter: StateFlow<MissionsFilter> = _selectedFilter.asStateFlow()
 
     init {
         loadMissions()
     }
 
+    /** Cambia el filtro activo de misiones */
     fun setFilter(filter: MissionsFilter) {
         _selectedFilter.value = filter
     }
 
+    /** Carga el catálogo de misiones y el progreso de tareas del usuario */
     fun loadMissions() {
         viewModelScope.launch {
             _uiState.value = MissionsUiState.Loading
@@ -50,6 +59,7 @@ class MissionsViewModel(
         }
     }
 
+    /** Inscribe al usuario a la actividad asociada dentro de la misión desplegada */
     fun enrollInActivity(activityId: Int, context: Context? = null, title: String? = null, location: String? = null) {
         viewModelScope.launch {
             homeRepository.enrollInActivity(userId, activityId)
@@ -63,6 +73,7 @@ class MissionsViewModel(
         }
     }
 
+    /** Cancela la inscripción del usuario a la actividad asociada */
     fun cancelEnrollment(activityId: Int) {
         viewModelScope.launch {
             homeRepository.cancelEnrollment(userId, activityId)
@@ -72,6 +83,7 @@ class MissionsViewModel(
     }
 }
 
+/** Fábrica de instanciación para MissionsViewModel */
 class MissionsViewModelFactory(
     private val missionsRepository: MissionsRepository,
     private val homeRepository: HomeRepository,

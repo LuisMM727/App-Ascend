@@ -5,10 +5,17 @@ import com.iglesia.jovenes.domain.LeaderboardEntryItem
 import com.iglesia.jovenes.domain.LeaderboardRepository
 import com.iglesia.jovenes.domain.LeaderboardScreenData
 
+/**
+ * Implementación del repositorio de clasificación y ranking.
+ * Divide los resultados entre el Podio Top 3, la lista general y la posición destacada del usuario actual.
+ */
 class LeaderboardRepositoryImpl(
     private val leaderboardDao: LeaderboardDao,
 ) : LeaderboardRepository {
 
+    /**
+     * Construye la vista de clasificación organizando el podio de los 3 mejores líderes y la posición del usuario.
+     */
     override suspend fun getLeaderboardData(userId: Int): Result<LeaderboardScreenData> = runCatching {
         val rawList = leaderboardDao.getFullLeaderboardRaw()
 

@@ -5,12 +5,18 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
+/**
+ * Entidad de Rol en el sistema (ADMIN, JUVENIL).
+ */
 @Entity(tableName = "ROLES")
 data class RoleEntity(
     @PrimaryKey @ColumnInfo(name = "ID_Rol") val id: Int,
     @ColumnInfo(name = "Nombre") val name: String,
 )
 
+/**
+ * Entidad de Usuario que almacena credenciales, estado y perfil.
+ */
 @Entity(tableName = "USUARIOS", indices = [Index("Correo", unique = true)])
 data class UserEntity(
     @PrimaryKey(autoGenerate = true) @ColumnInfo(name = "ID_Usuarios") val id: Int = 0,
@@ -29,6 +35,9 @@ data class UserEntity(
     @ColumnInfo(name = "PerfilCompletado") val isProfileComplete: Boolean = false,
 )
 
+/**
+ * Entidad que registra los Puntos de Experiencia (XP) acumulados y el nivel del usuario.
+ */
 @Entity(tableName = "USUARIO_PUNTOS", indices = [Index("FK_Usuarios", unique = true)])
 data class UserPointsEntity(
     @PrimaryKey(autoGenerate = true) @ColumnInfo(name = "ID_Usuarios_puntos") val id: Int = 0,
@@ -38,6 +47,9 @@ data class UserPointsEntity(
     @ColumnInfo(name = "Ultima_actualizacion") val updatedAt: Long,
 )
 
+/**
+ * Entidad de Niveles de crecimiento en la comunidad con metas de XP.
+ */
 @Entity(tableName = "NIVELES")
 data class LevelEntity(
     @PrimaryKey @ColumnInfo(name = "ID_Niveles") val id: Int,
@@ -47,6 +59,9 @@ data class LevelEntity(
     @ColumnInfo(name = "Orden") val order: Int,
 )
 
+/**
+ * Entidad de Misión comunitaria especial con puntos de bono.
+ */
 @Entity(tableName = "MISIONES", indices = [Index("Estado")])
 data class MissionEntity(
     @PrimaryKey @ColumnInfo(name = "ID_Misiones") val id: Int,
@@ -58,6 +73,9 @@ data class MissionEntity(
     @ColumnInfo(name = "Estado") val status: String,
 )
 
+/**
+ * Entidad de Actividad o evento presencial con cupos y experiencia.
+ */
 @Entity(tableName = "ACTIVIDADES", indices = [Index("Fecha"), Index("Estado")])
 data class ActivityEntity(
     @PrimaryKey @ColumnInfo(name = "ID_Actividades") val id: Int,
@@ -74,6 +92,9 @@ data class ActivityEntity(
     @ColumnInfo(name = "FK_Usuarios") val creatorUserId: Int,
 )
 
+/**
+ * Entidad de Inscripción de un joven a un evento o actividad comunitaria.
+ */
 @Entity(
     tableName = "INSCRIPCIONES",
     indices = [Index(value = ["FK_Usuarios", "FK_Actividades"], unique = true)],
@@ -87,6 +108,9 @@ data class EnrollmentEntity(
     @ColumnInfo(name = "Puntos_ganados") val earnedPoints: Int,
 )
 
+/**
+ * Entidad de Insignias y logros desbloqueables por metas de XP.
+ */
 @Entity(tableName = "INSIGNIAS")
 data class BadgeEntity(
     @PrimaryKey @ColumnInfo(name = "ID_Insignias") val id: Int,
@@ -97,6 +121,9 @@ data class BadgeEntity(
     @ColumnInfo(name = "Condicion_valor") val conditionValue: Int,
 )
 
+/**
+ * Entidad de relación que vincula Actividades específicas a una Misión.
+ */
 @Entity(tableName = "MISION_ACTIVIDADES")
 data class MissionActivityEntity(
     @PrimaryKey @ColumnInfo(name = "ID_Mision_actividades") val id: Int,

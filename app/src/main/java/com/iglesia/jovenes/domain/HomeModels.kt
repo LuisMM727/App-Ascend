@@ -1,5 +1,8 @@
 package com.iglesia.jovenes.domain
 
+/**
+ * Modelo del encabezado de la pantalla principal con nivel y progreso de XP.
+ */
 data class UserHeader(
     val userId: Int,
     val fullName: String,
@@ -8,6 +11,9 @@ data class UserHeader(
     val levelOrder: Int,
     val requiredPoints: Int,
 ) {
+    /**
+     * Calcula la barra de progreso normalizada (0.0f a 1.0f) hacia el siguiente nivel.
+     */
     val progress: Float
         get() {
             if (requiredPoints <= 0) return 0f
@@ -16,6 +22,9 @@ data class UserHeader(
         }
 }
 
+/**
+ * Modelo de una Misión Destacada o Activa para la vista principal.
+ */
 data class FeaturedMission(
     val missionId: Int,
     val name: String,
@@ -27,6 +36,9 @@ data class FeaturedMission(
     val endsAt: Long = 0L,
 )
 
+/**
+ * Modelo de una Actividad Comunitaria para la vista principal.
+ */
 data class HomeActivity(
     val activityId: Int,
     val title: String,
@@ -38,6 +50,9 @@ data class HomeActivity(
     val enrollmentStatus: String?,
 )
 
+/**
+ * Modelo de entrada simplificada para el resumen de líderes en la vista principal.
+ */
 data class LeaderboardEntry(
     val position: Int,
     val userId: Int,
@@ -45,6 +60,9 @@ data class LeaderboardEntry(
     val points: Int,
 )
 
+/**
+ * Modelo contenedor que agrupa toda la información de la pantalla de inicio (Home).
+ */
 data class HomeData(
     val header: UserHeader,
     val featuredMission: FeaturedMission?,

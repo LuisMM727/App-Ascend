@@ -10,12 +10,16 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+/** Estados UI para la pantalla de clasificación */
 sealed interface LeaderboardUiState {
     data object Loading : LeaderboardUiState
     data class Success(val data: LeaderboardScreenData) : LeaderboardUiState
     data class Error(val message: String) : LeaderboardUiState
 }
 
+/**
+ * ViewModel que gestiona la tabla de posiciones, podio del Top 3 y posición del usuario.
+ */
 class LeaderboardViewModel(
     private val leaderboardRepository: LeaderboardRepository,
     private val userId: Int,
@@ -28,6 +32,7 @@ class LeaderboardViewModel(
         loadLeaderboard()
     }
 
+    /** Carga el ranking completo y la posición del usuario actual */
     fun loadLeaderboard() {
         viewModelScope.launch {
             _uiState.value = LeaderboardUiState.Loading
@@ -38,6 +43,7 @@ class LeaderboardViewModel(
     }
 }
 
+/** Fábrica de instanciación para LeaderboardViewModel */
 class LeaderboardViewModelFactory(
     private val leaderboardRepository: LeaderboardRepository,
     private val userId: Int,

@@ -5,10 +5,17 @@ import com.iglesia.jovenes.domain.ProfileBadgeItem
 import com.iglesia.jovenes.domain.ProfileRepository
 import com.iglesia.jovenes.domain.UserProfileData
 
+/**
+ * Implementación del repositorio de perfil del usuario.
+ * Carga estadísticas personales, nivel dinámico, catálogo de insignias y edición de información personal.
+ */
 class ProfileRepositoryImpl(
     private val profileDao: ProfileDao,
 ) : ProfileRepository {
 
+    /**
+     * Obtiene la información completa del perfil del joven, calculando sus insignias desbloqueadas.
+     */
     override suspend fun getProfile(userId: Int): Result<UserProfileData> = runCatching {
         val raw = profileDao.getUserProfileDetails(userId)
             ?: error("No se pudo cargar la información del usuario.")
@@ -42,6 +49,9 @@ class ProfileRepositoryImpl(
         )
     }
 
+    /**
+     * Actualiza la información personal editable del usuario (Iglesia, Edad, Teléfono).
+     */
     override suspend fun updateProfileDetails(userId: Int, church: String, age: Int, phone: String): Result<Unit> = runCatching {
         if (church.isBlank()) error("La iglesia no puede estar vacía.")
         if (age <= 0) error("Ingresa una edad válida.")

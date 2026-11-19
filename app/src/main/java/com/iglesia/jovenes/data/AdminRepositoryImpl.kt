@@ -13,10 +13,17 @@ import com.iglesia.jovenes.domain.CreateActivityParams
 import com.iglesia.jovenes.domain.CreateMissionParams
 import com.iglesia.jovenes.domain.EnrolledUserItem
 
+/**
+ * Implementación del repositorio del panel de Administrador.
+ * Maneja la gestión de usuarios, creación de misiones y eventos, control de asistencia y configuración de niveles.
+ */
 class AdminRepositoryImpl(
     private val adminDao: AdminDao,
 ) : AdminRepository {
 
+    /**
+     * Consulta las métricas generales del sistema (total de usuarios, misiones activas y próximos eventos).
+     */
     override suspend fun getStats(): Result<AdminStats> = runCatching {
         AdminStats(
             totalUsers = adminDao.getUserCount(),
@@ -25,6 +32,9 @@ class AdminRepositoryImpl(
         )
     }
 
+    /**
+     * Obtiene el listado completo de jóvenes registrados con sus puntos XP acumulados.
+     */
     override suspend fun getUsers(): Result<List<AdminUserItem>> = runCatching {
         adminDao.getAllUsersWithPoints().map { raw ->
             AdminUserItem(
@@ -42,11 +52,17 @@ class AdminRepositoryImpl(
         }
     }
 
+    /**
+     * Activa o desactiva la cuenta de un usuario registrado.
+     */
     override suspend fun toggleUserStatus(userId: Int, currentStatus: String): Result<Unit> = runCatching {
         val newStatus = if (currentStatus == "ACTIVO") "INACTIVO" else "ACTIVO"
         adminDao.updateUserStatus(userId, newStatus)
     }
 
+    /**
+     * Obtiene el catálogo de misiones registradas en el sistema.
+     */
     override suspend fun getMissions(): Result<List<AdminMissionItem>> = runCatching {
         adminDao.getAllMissions().map { entity ->
             AdminMissionItem(
@@ -61,6 +77,9 @@ class AdminRepositoryImpl(
         }
     }
 
+    /**
+     * Crea una nueva misión comunitaria con sus puntos bonus y plazo de vigencia.
+     */
     override suspend fun createMission(params: CreateMissionParams): Result<Unit> = runCatching {
         if (params.name.isBlank()) error("El nombre de la misión no puede estar vacío.")
         if (params.bonusPoints <= 0) error("Los puntos bonus deben ser mayores a 0.")
@@ -80,11 +99,17 @@ class AdminRepositoryImpl(
         adminDao.insertMission(entity)
     }
 
+    /**
+     * Cambia el estado de una misión entre ACTIVA e INACTIVA.
+     */
     override suspend fun toggleMissionStatus(missionId: Int, currentStatus: String): Result<Unit> = runCatching {
         val newStatus = if (currentStatus == "ACTIVA") "INACTIVA" else "ACTIVA"
         adminDao.updateMissionStatus(missionId, newStatus)
     }
 
+    /**
+     * Obtiene todas las actividades o eventos comunitarios.
+     */
     override suspend fun getActivities(): Result<List<AdminActivityItem>> = runCatching {
         adminDao.getAllActivities().map { entity ->
             AdminActivityItem(
@@ -102,6 +127,9 @@ class AdminRepositoryImpl(
         }
     }
 
+    /**
+     * Crea una nueva actividad comunitaria y la vincula de forma automática a las misiones activas.
+     */
     override suspend fun createActivity(creatorUserId: Int, params: CreateActivityParams): Result<Unit> = runCatching {
         if (params.title.isBlank()) error("El título de la actividad no puede estar vacío.")
         if (params.location.isBlank()) error("El lugar no puede estar vacío.")
@@ -128,11 +156,17 @@ class AdminRepositoryImpl(
         adminDao.linkActivityToActiveMissions(newId)
     }
 
+    /**
+     * Cambia el estado de una actividad entre ACTIVA e INACTIVA.
+     */
     override suspend fun toggleActivityStatus(activityId: Int, currentStatus: String): Result<Unit> = runCatching {
         val newStatus = if (currentStatus == "ACTIVA") "INACTIVA" else "ACTIVA"
         adminDao.updateActivityStatus(activityId, newStatus)
     }
 
+    /**
+     * Consulta los jóvenes inscritos a una actividad dada para la toma de asistencia.
+     */
     override suspend fun getEnrolledUsersForActivity(activityId: Int): Result<List<EnrolledUserItem>> = runCatching {
         adminDao.getEnrolledUsersForActivity(activityId).map { raw ->
             EnrolledUserItem(
@@ -146,10 +180,16 @@ class AdminRepositoryImpl(
         }
     }
 
+    /**
+     * Marca la asistencia confirmada de un joven y le acredita los puntos XP ganados.
+     */
     override suspend fun markAttendance(userId: Int, activityId: Int, points: Int): Result<Unit> = runCatching {
         adminDao.markAttendanceAndGrantPoints(userId, activityId, points)
     }
 
+    /**
+     * Obtiene los niveles configurados en la aplicación con sus puntos XP requeridos.
+     */
     override suspend fun getLevels(): Result<List<AdminLevelItem>> = runCatching {
         adminDao.getAllLevels().map { entity ->
             AdminLevelItem(
@@ -162,6 +202,9 @@ class AdminRepositoryImpl(
         }
     }
 
+    /**
+     * Actualiza la cantidad de puntos XP requeridos para alcanzar un nivel determinado.
+     */
     override suspend fun updateLevelPoints(levelId: Int, points: Int): Result<Unit> = runCatching {
         if (points <= 0) error("Los puntos requeridos deben ser mayores a 0.")
         adminDao.updateLevelPoints(levelId, points)

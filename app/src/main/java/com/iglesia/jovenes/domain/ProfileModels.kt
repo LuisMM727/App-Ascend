@@ -1,5 +1,8 @@
 package com.iglesia.jovenes.domain
 
+/**
+ * Modelo de una Insignia o Medalla representada en la cuadrícula del perfil.
+ */
 data class ProfileBadgeItem(
     val badgeId: Int,
     val name: String,
@@ -8,6 +11,9 @@ data class ProfileBadgeItem(
     val conditionValue: Int,
 )
 
+/**
+ * Modelo de datos del perfil completo del usuario.
+ */
 data class UserProfileData(
     val userId: Int,
     val name: String,
@@ -24,7 +30,10 @@ data class UserProfileData(
     val completedActivitiesCount: Int,
     val badges: List<ProfileBadgeItem>,
 ) {
+    /** Nombre completo del usuario */
     val fullName: String get() = "$name $lastName".trim()
+
+    /** Progreso normalizado de experiencia (XP) hacia el objetivo del siguiente nivel */
     val progress: Float
         get() {
             if (requiredPoints <= 0) return 0f

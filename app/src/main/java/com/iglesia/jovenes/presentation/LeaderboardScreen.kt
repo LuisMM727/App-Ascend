@@ -47,6 +47,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.iglesia.jovenes.domain.LeaderboardEntryItem
 import com.iglesia.jovenes.domain.LeaderboardScreenData
 
+/**
+ * Ruta de navegación para la pantalla de clasificación de líderes.
+ */
 @Composable
 fun LeaderboardRoute(
     viewModel: LeaderboardViewModel,
@@ -61,6 +64,9 @@ fun LeaderboardRoute(
     )
 }
 
+/**
+ * Pantalla principal del Ranking que muestra el podio Top 3, la posición actual del usuario y el listado general.
+ */
 @Composable
 fun LeaderboardScreen(
     uiState: LeaderboardUiState,
@@ -92,6 +98,9 @@ fun LeaderboardScreen(
     }
 }
 
+/**
+ * Contenido principal desplegado al cargar la clasificación exitosamente.
+ */
 @Composable
 private fun LeaderboardContent(
     data: LeaderboardScreenData,
@@ -217,14 +226,13 @@ private fun LeaderboardContent(
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
             )
-
             PodiumView(top3 = data.top3)
         }
 
-        // Lista Completa de Puestos #4 en adelante
+        // Listado General
         if (data.fullList.isNotEmpty()) {
             Text(
-                text = "Ranking General",
+                text = "Posiciones Generales",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
@@ -232,10 +240,10 @@ private fun LeaderboardContent(
 
             Card(
                 colors = CardDefaults.cardColors(containerColor = CardSurface),
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(24.dp),
                 border = BorderStroke(1.dp, Color.White.copy(alpha = 0.06f)),
             ) {
-                Column {
+                Column(modifier = Modifier.padding(vertical = 8.dp)) {
                     data.fullList.forEachIndexed { index, entry ->
                         LeaderboardRowItem(entry = entry)
                         if (index < data.fullList.lastIndex) {
@@ -245,11 +253,12 @@ private fun LeaderboardContent(
                 }
             }
         }
-
-        Spacer(Modifier.height(40.dp))
     }
 }
 
+/**
+ * Muestra el podio visual para las posiciones 1 (Oro), 2 (Plata) y 3 (Bronce).
+ */
 @Composable
 private fun PodiumView(top3: List<LeaderboardEntryItem>) {
     val first = top3.firstOrNull()
@@ -292,6 +301,9 @@ private fun PodiumView(top3: List<LeaderboardEntryItem>) {
     }
 }
 
+/**
+ * Columna individual de puesto en el podio.
+ */
 @Composable
 private fun PodiumColumn(
     entry: LeaderboardEntryItem?,
@@ -333,31 +345,23 @@ private fun PodiumColumn(
             Text(
                 text = "${entry.points} XP",
                 fontSize = 11.sp,
-                color = accentColor,
                 fontWeight = FontWeight.Bold,
+                color = NeonCyan,
+                modifier = Modifier.padding(bottom = 6.dp),
             )
-        } else {
-            Spacer(Modifier.height(46.dp))
         }
 
-        Spacer(Modifier.height(8.dp))
-
-        // Bloque del Podio
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(height)
+                .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
                 .background(
                     Brush.verticalGradient(
                         listOf(accentColor.copy(alpha = 0.35f), CardSurface),
                     ),
-                    RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
                 )
-                .border(
-                    1.dp,
-                    accentColor.copy(alpha = 0.4f),
-                    RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-                ),
+                .border(1.dp, accentColor.copy(alpha = 0.5f), RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
             contentAlignment = Alignment.Center,
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -371,43 +375,43 @@ private fun PodiumColumn(
                     text = "#$rank",
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 22.sp,
-                    color = accentColor,
+                    color = Color.White,
                 )
             }
         }
     }
 }
 
+/**
+ * Fila individual del listado general del ranking.
+ */
 @Composable
 private fun LeaderboardRowItem(entry: LeaderboardEntryItem) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(if (entry.isCurrentUser) NeonCyan.copy(alpha = 0.1f) else Color.Transparent)
-            .padding(16.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = "#${entry.position}",
             modifier = Modifier.width(36.dp),
             fontWeight = FontWeight.ExtraBold,
-            color = MutedText,
             fontSize = 14.sp,
+            color = MutedText,
         )
 
         Box(
             modifier = Modifier
-                .size(38.dp)
-                .background(
-                    if (entry.isCurrentUser) NeonCyan.copy(alpha = 0.2f) else ElectricPurple.copy(alpha = 0.15f),
-                    CircleShape,
-                ),
+                .size(36.dp)
+                .background(ElectricPurple.copy(alpha = 0.2f), CircleShape),
             contentAlignment = Alignment.Center,
         ) {
             Text(
                 text = entry.fullName.take(1).uppercase(),
                 fontWeight = FontWeight.Bold,
-                color = if (entry.isCurrentUser) NeonCyan else Color.White,
+                color = NeonCyan,
+                fontSize = 14.sp,
             )
         }
 
@@ -419,21 +423,29 @@ private fun LeaderboardRowItem(entry: LeaderboardEntryItem) {
             Text(
                 text = entry.fullName,
                 fontWeight = FontWeight.Bold,
-                color = if (entry.isCurrentUser) NeonCyan else Color.White,
+                color = Color.White,
                 fontSize = 14.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
-            Text(
-                text = entry.church ?: "Ascend",
-                style = MaterialTheme.typography.labelSmall,
-                color = MutedText,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Outlined.Church, contentDescription = null, tint = MutedText, modifier = Modifier.size(12.dp))
+                Text(
+                    text = "${entry.church ?: "Comunidad"} · ${entry.levelName}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MutedText,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(start = 4.dp),
+                )
+            }
         }
 
         Text(
             text = "${entry.points} XP",
             fontWeight = FontWeight.Bold,
-            color = NeonCyan,
-            fontSize = 14.sp,
+            color = RewardGold,
+            fontSize = 13.sp,
         )
     }
 }

@@ -12,16 +12,21 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+/** Estados UI de la pantalla principal */
 sealed interface HomeUiState {
     data object Loading : HomeUiState
     data class Success(val data: HomeData) : HomeUiState
     data class Error(val message: String) : HomeUiState
 }
 
+/**
+ * ViewModel que gestiona la carga de la vista principal del joven y el proceso de inscripción a eventos.
+ */
 class HomeViewModel(
     private val repository: HomeRepository,
     private val userId: Int,
 ) : ViewModel() {
+
     private val _state = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
     val state: StateFlow<HomeUiState> = _state.asStateFlow()
 
@@ -29,6 +34,7 @@ class HomeViewModel(
         refresh()
     }
 
+    /** Recarga los datos del encabezado, misiones y próximos eventos */
     fun refresh() {
         viewModelScope.launch {
             _state.value = HomeUiState.Loading
@@ -42,6 +48,7 @@ class HomeViewModel(
         }
     }
 
+    /** Inscribe al joven en una actividad y dispara la notificación de confirmación */
     fun enrollInActivity(activityId: Int, context: Context? = null, title: String? = null, location: String? = null) {
         viewModelScope.launch {
             repository.enrollInActivity(userId, activityId)
@@ -55,6 +62,7 @@ class HomeViewModel(
         }
     }
 
+    /** Cancela la inscripción del joven a la actividad y libera el cupo */
     fun cancelEnrollment(activityId: Int) {
         viewModelScope.launch {
             repository.cancelEnrollment(userId, activityId)
@@ -64,6 +72,7 @@ class HomeViewModel(
     }
 }
 
+/** Fábrica de instanciación para HomeViewModel */
 class HomeViewModelFactory(
     private val repository: HomeRepository,
     private val userId: Int,

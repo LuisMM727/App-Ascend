@@ -6,10 +6,17 @@ import com.iglesia.jovenes.domain.MissionDetailItem
 import com.iglesia.jovenes.domain.MissionsRepository
 import com.iglesia.jovenes.domain.MissionsScreenData
 
+/**
+ * Implementación del repositorio de misiones.
+ * Mapea misiones activas y el desglose de tareas/actividades comunitarias asociadas.
+ */
 class MissionsRepositoryImpl(
     private val missionsDao: MissionsDao,
 ) : MissionsRepository {
 
+    /**
+     * Obtiene el listado completo de misiones y consulta las actividades vinculadas a cada misión.
+     */
     override suspend fun getMissionsScreenData(userId: Int): Result<MissionsScreenData> = runCatching {
         val rawMissions = missionsDao.getAllMissionsWithProgress(userId)
 

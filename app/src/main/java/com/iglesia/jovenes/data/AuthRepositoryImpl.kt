@@ -9,10 +9,17 @@ import com.iglesia.jovenes.domain.OnboardingParams
 import com.iglesia.jovenes.domain.RegisterParams
 import com.iglesia.jovenes.domain.UserRole
 
+/**
+ * Implementación del repositorio de autenticación.
+ * Gestiona el inicio de sesión, registro de nuevos jóvenes y el proceso de onboarding.
+ */
 class AuthRepositoryImpl(
     private val authDao: AuthDao,
 ) : AuthRepository {
 
+    /**
+     * Valida las credenciales ingresadas e inicia la sesión del usuario o administrador.
+     */
     override suspend fun login(email: String, password: String): Result<AuthUser> = runCatching {
         val cleanEmail = email.trim().lowercase()
         var user = authDao.getUserByEmail(cleanEmail)
@@ -84,6 +91,9 @@ class AuthRepositoryImpl(
         user.toAuthUser()
     }
 
+    /**
+     * Registra un nuevo usuario joven en la base de datos con nivel 1 e información pendiente de onboarding.
+     */
     override suspend fun register(params: RegisterParams): Result<AuthUser> = runCatching {
         val cleanEmail = params.email.trim().lowercase()
 
@@ -119,7 +129,7 @@ class AuthRepositoryImpl(
 
         val insertedId = authDao.insertUser(newUserEntity).toInt()
 
-        // Asignar puntos y nivel inicial
+        // Asignar puntos y nivel inicial (100 XP)
         val pointsEntity = UserPointsEntity(
             id = insertedId,
             userId = insertedId,
@@ -139,6 +149,9 @@ class AuthRepositoryImpl(
         )
     }
 
+    /**
+     * Completa los datos personales del perfil del joven (Iglesia, Edad, Teléfono) requeridos en el onboarding.
+     */
     override suspend fun completeProfile(params: OnboardingParams): Result<AuthUser> = runCatching {
         if (params.church.isBlank()) {
             error("Debes especificar la iglesia a la que perteneces.")
@@ -160,6 +173,9 @@ class AuthRepositoryImpl(
         updatedUser.toAuthUser()
     }
 
+    /**
+     * Convierte una entidad de usuario de la base de datos a la representación de modelo de dominio.
+     */
     private fun UserEntity.toAuthUser(): AuthUser {
         val role = if (roleId == 1) UserRole.ADMIN else UserRole.JUVENIL
         return AuthUser(
